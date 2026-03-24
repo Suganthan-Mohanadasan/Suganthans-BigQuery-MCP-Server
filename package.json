@@ -1,0 +1,40 @@
+{
+  "name": "@suganthan/bigquery-mcp",
+  "version": "1.0.0",
+  "description": "BigQuery MCP server for Claude — query any BigQuery dataset in natural language, with built-in SEO analysis tools for GSC bulk export data",
+  "main": "dist/index.js",
+  "bin": {
+    "bigquery-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "mcp",
+    "bigquery",
+    "google-cloud",
+    "seo",
+    "claude",
+    "google-search-console"
+  ],
+  "author": "Suganthan Mohanadasan",
+  "license": "MIT",
+  "dependencies": {
+    "@google-cloud/bigquery": "^7.9.0",
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}
