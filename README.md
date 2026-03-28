@@ -1,24 +1,47 @@
 # BigQuery MCP Server
 
-An MCP server that connects Claude to Google BigQuery. Query any dataset in natural language. Comes with built-in SEO analysis tools for Google Search Console bulk export data.
+An MCP server that connects Claude to Google BigQuery. Query any dataset in natural language. Comes with 18 tools including a full suite of SEO analysis tools for Google Search Console bulk export data.
 
 ## What it does
 
 **General purpose tools** (work with any BigQuery dataset):
 
-- **query** — Run any SELECT query against BigQuery. Claude writes the SQL based on your question. Auto-injects LIMIT if missing.
-- **query_cost_estimate** — Dry-run a query to see how many bytes it would scan and the estimated cost before executing.
-- **list_datasets** — Discover what datasets are available in your project.
-- **list_tables** — See all tables and their schemas in a dataset. Uses INFORMATION_SCHEMA for efficiency.
-- **describe_table** — Get detailed column info, row counts, partitioning, and clustering.
-- **sample_rows** — Preview rows from any table without writing SQL.
+| # | Tool | Description |
+|---|------|-------------|
+| 1 | **query** | Run any SELECT query against BigQuery. Auto-injects LIMIT if missing. |
+| 2 | **query_cost_estimate** | Dry-run a query to see bytes scanned and estimated cost before executing. |
+| 3 | **list_datasets** | Discover what datasets are available in your project. |
+| 4 | **list_tables** | See all tables and schemas in a dataset. Uses INFORMATION_SCHEMA for efficiency. |
+| 5 | **describe_table** | Get detailed column info, row counts, partitioning, and clustering. |
+| 6 | **sample_rows** | Preview rows from any table without writing SQL. |
 
 **GSC analysis tools** (require GSC bulk data export to BigQuery):
 
-- **gsc_quick_wins** — Keywords at positions 4 to 15 with high impressions. Striking distance opportunities.
-- **gsc_content_decay** — Pages with traffic declining over three consecutive months.
-- **gsc_cannibalisation** — Keywords where multiple pages from your site compete against each other.
-- **gsc_traffic_drops** — Pages that lost traffic with diagnosis: ranking loss, CTR collapse, or demand decline.
+| # | Tool | Description |
+|---|------|-------------|
+| 7 | **gsc_quick_wins** | Keywords at positions 4 to 15 with high impressions. Striking distance opportunities. |
+| 8 | **gsc_ctr_opportunities** | Pages with CTR significantly below benchmark for their position. Title/meta optimisation candidates. |
+| 9 | **gsc_content_gaps** | Queries with high impressions but ranking beyond position 20. Content creation targets. |
+| 10 | **gsc_site_snapshot** | Site overview with clicks, impressions, CTR, position, and period comparison. |
+| 11 | **gsc_content_decay** | Pages with traffic declining over three consecutive months. |
+| 12 | **gsc_cannibalisation** | Keywords where multiple pages compete against each other. |
+| 13 | **gsc_traffic_drops** | Pages that lost traffic with diagnosis: ranking loss, CTR collapse, or demand decline. |
+| 14 | **gsc_topic_cluster** | Aggregate performance for all pages matching a URL pattern, plus top pages and queries. |
+| 15 | **gsc_ctr_benchmark** | Compare actual CTR per page against industry benchmarks by position with verdicts. |
+| 16 | **gsc_alerts** | Severity-rated alerts for position drops, CTR collapses, click losses, and disappeared pages. |
+| 17 | **gsc_content_recommendations** | Prioritised actions by cross-referencing quick wins, content gaps, and cannibalisation data. |
+| 18 | **gsc_report** | Comprehensive markdown performance report covering all sections. |
+
+## Hallucination Guardrails
+
+All GSC tools include built-in guardrails that instruct Claude to:
+
+- Base analysis **only** on the data returned
+- Report **exact numbers** from the results
+- **Not speculate** about causes (algorithm updates, competitor actions) unless data supports it
+- **Say clearly** when data is insufficient rather than guessing
+
+Every response includes a `_meta` provenance field confirming the data source and parameters used.
 
 ## Why BigQuery instead of the GSC API?
 
@@ -94,8 +117,13 @@ Once connected, just ask Claude questions:
 - "What are my quick win keywords?"
 - "Which pages are losing traffic and why?"
 - "Show me queries where multiple pages are competing"
+- "Which pages have CTR below benchmark?"
+- "Give me a site snapshot for the last 28 days"
+- "How is my /blog/seo/ cluster performing?"
+- "Are there any SEO alerts I should know about?"
+- "Generate a full performance report"
+- "What content should I create or update next?"
 - "Run a query to find my top 20 pages by clicks this month"
-- "What tables are in my searchconsole dataset?"
 - "How much would it cost to query the full impressions table?"
 - "Show me 10 sample rows from the url_impression table"
 
@@ -109,6 +137,7 @@ Claude will use the appropriate tool, write SQL if needed, and interpret the res
 - **Row limits.** Default 100 rows per query, configurable up to 10,000.
 - **Cost cap.** Queries are limited to 10GB bytes billed to prevent accidental cost blowout. Sample queries are capped at 1GB.
 - **Cost preview.** Use `query_cost_estimate` to dry-run any query and see the bytes scanned before committing.
+- **Guardrails.** All GSC tools include hallucination prevention instructions and data provenance metadata.
 
 ## Blog Post
 
