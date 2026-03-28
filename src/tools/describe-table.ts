@@ -1,4 +1,4 @@
-import { getBigQueryClient, getConfig } from "../client.js";
+import { getBigQueryClient, getConfig, validateIdentifier } from "../client.js";
 
 interface ColumnDetail {
   name: string;
@@ -26,6 +26,12 @@ export async function describeTable(
   table: string,
   projectId?: string
 ): Promise<TableDescription> {
+  validateIdentifier(dataset, "dataset");
+  validateIdentifier(table, "table");
+  if (projectId) {
+    validateIdentifier(projectId, "project_id");
+  }
+
   const client = getBigQueryClient();
   const config = getConfig();
   const targetProject = projectId || config.projectId;

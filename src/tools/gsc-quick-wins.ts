@@ -1,5 +1,5 @@
 import { runQuery } from "./query.js";
-import { getConfig } from "../client.js";
+import { getConfig, validateIdentifier } from "../client.js";
 
 export async function gscQuickWins(
   days: number = 28,
@@ -9,6 +9,7 @@ export async function gscQuickWins(
 ): Promise<{ rows: Record<string, unknown>[]; totalRows: number; bytesProcessed: string }> {
   const config = getConfig();
   const ds = dataset || config.defaultDataset || "searchconsole";
+  validateIdentifier(ds, "dataset");
 
   const sql = `
     SELECT
@@ -22,6 +23,7 @@ export async function gscQuickWins(
     WHERE
       data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
       AND is_anonymized_query = false
+      AND search_type = 'WEB'
     GROUP BY query
     HAVING
       avg_position BETWEEN 4 AND ${maxPosition}

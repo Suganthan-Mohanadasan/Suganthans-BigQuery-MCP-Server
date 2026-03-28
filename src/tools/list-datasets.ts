@@ -1,4 +1,4 @@
-import { getBigQueryClient, getConfig } from "../client.js";
+import { getBigQueryClient, getConfig, validateIdentifier } from "../client.js";
 
 interface DatasetInfo {
   id: string;
@@ -7,6 +7,10 @@ interface DatasetInfo {
 }
 
 export async function listDatasets(projectId?: string): Promise<DatasetInfo[]> {
+  if (projectId) {
+    validateIdentifier(projectId, "project_id");
+  }
+
   const client = getBigQueryClient();
   const config = getConfig();
   const targetProject = projectId || config.projectId;

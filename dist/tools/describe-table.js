@@ -3,6 +3,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.describeTable = describeTable;
 const client_js_1 = require("../client.js");
 async function describeTable(dataset, table, projectId) {
+    (0, client_js_1.validateIdentifier)(dataset, "dataset");
+    (0, client_js_1.validateIdentifier)(table, "table");
+    if (projectId) {
+        (0, client_js_1.validateIdentifier)(projectId, "project_id");
+    }
     const client = (0, client_js_1.getBigQueryClient)();
     const config = (0, client_js_1.getConfig)();
     const targetProject = projectId || config.projectId;

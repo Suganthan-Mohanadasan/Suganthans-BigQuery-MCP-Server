@@ -1,5 +1,5 @@
 import { runQuery } from "./query.js";
-import { getConfig } from "../client.js";
+import { getConfig, validateIdentifier } from "../client.js";
 
 export async function gscCannibalisation(
   days: number = 28,
@@ -8,6 +8,7 @@ export async function gscCannibalisation(
 ): Promise<{ rows: Record<string, unknown>[]; totalRows: number; bytesProcessed: string }> {
   const config = getConfig();
   const ds = dataset || config.defaultDataset || "searchconsole";
+  validateIdentifier(ds, "dataset");
 
   const sql = `
     WITH query_urls AS (

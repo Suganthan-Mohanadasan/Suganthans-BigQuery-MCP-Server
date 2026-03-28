@@ -3,6 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.listDatasets = listDatasets;
 const client_js_1 = require("../client.js");
 async function listDatasets(projectId) {
+    if (projectId) {
+        (0, client_js_1.validateIdentifier)(projectId, "project_id");
+    }
     const client = (0, client_js_1.getBigQueryClient)();
     const config = (0, client_js_1.getConfig)();
     const targetProject = projectId || config.projectId;

@@ -6,6 +6,7 @@ const client_js_1 = require("../client.js");
 async function gscTrafficDrops(days = 28, dataset) {
     const config = (0, client_js_1.getConfig)();
     const ds = dataset || config.defaultDataset || "searchconsole";
+    (0, client_js_1.validateIdentifier)(ds, "dataset");
     const sql = `
     WITH current_period AS (
       SELECT
@@ -15,7 +16,9 @@ async function gscTrafficDrops(days = 28, dataset) {
         ROUND(SAFE_DIVIDE(SUM(clicks), SUM(impressions)) * 100, 2) AS ctr_pct,
         ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)), 1) AS avg_position
       FROM \`${ds}.searchdata_url_impression\`
-      WHERE data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
+      WHERE
+        data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
+        AND search_type = 'WEB'
       GROUP BY url
     ),
     prior_period AS (
@@ -26,8 +29,10 @@ async function gscTrafficDrops(days = 28, dataset) {
         ROUND(SAFE_DIVIDE(SUM(clicks), SUM(impressions)) * 100, 2) AS ctr_pct,
         ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)), 1) AS avg_position
       FROM \`${ds}.searchdata_url_impression\`
-      WHERE data_date BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL ${days * 2} DAY)
-        AND DATE_SUB(CURRENT_DATE(), INTERVAL ${days + 1} DAY)
+      WHERE
+        data_date BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL ${days * 2} DAY)
+          AND DATE_SUB(CURRENT_DATE(), INTERVAL ${days + 1} DAY)
+        AND search_type = 'WEB'
       GROUP BY url
     )
     SELECT

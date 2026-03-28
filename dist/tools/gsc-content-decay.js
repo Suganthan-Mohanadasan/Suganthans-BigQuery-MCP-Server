@@ -6,6 +6,7 @@ const client_js_1 = require("../client.js");
 async function gscContentDecay(dataset) {
     const config = (0, client_js_1.getConfig)();
     const ds = dataset || config.defaultDataset || "searchconsole";
+    (0, client_js_1.validateIdentifier)(ds, "dataset");
     const sql = `
     WITH monthly AS (
       SELECT
@@ -13,7 +14,9 @@ async function gscContentDecay(dataset) {
         DATE_TRUNC(data_date, MONTH) AS month,
         SUM(clicks) AS clicks
       FROM \`${ds}.searchdata_url_impression\`
-      WHERE data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 4 MONTH)
+      WHERE
+        data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 4 MONTH)
+        AND search_type = 'WEB'
       GROUP BY url, month
     ),
     ranked AS (

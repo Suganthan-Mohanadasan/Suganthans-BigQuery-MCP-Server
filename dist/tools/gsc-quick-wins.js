@@ -6,6 +6,7 @@ const client_js_1 = require("../client.js");
 async function gscQuickWins(days = 28, minImpressions = 100, maxPosition = 15, dataset) {
     const config = (0, client_js_1.getConfig)();
     const ds = dataset || config.defaultDataset || "searchconsole";
+    (0, client_js_1.validateIdentifier)(ds, "dataset");
     const sql = `
     SELECT
       query,
@@ -18,6 +19,7 @@ async function gscQuickWins(days = 28, minImpressions = 100, maxPosition = 15, d
     WHERE
       data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
       AND is_anonymized_query = false
+      AND search_type = 'WEB'
     GROUP BY query
     HAVING
       avg_position BETWEEN 4 AND ${maxPosition}

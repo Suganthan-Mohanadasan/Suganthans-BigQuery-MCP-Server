@@ -1,11 +1,12 @@
 import { runQuery } from "./query.js";
-import { getConfig } from "../client.js";
+import { getConfig, validateIdentifier } from "../client.js";
 
 export async function gscContentDecay(
   dataset?: string
 ): Promise<{ rows: Record<string, unknown>[]; totalRows: number; bytesProcessed: string }> {
   const config = getConfig();
   const ds = dataset || config.defaultDataset || "searchconsole";
+  validateIdentifier(ds, "dataset");
 
   const sql = `
     WITH monthly AS (
@@ -14,7 +15,9 @@ export async function gscContentDecay(
         DATE_TRUNC(data_date, MONTH) AS month,
         SUM(clicks) AS clicks
       FROM \`${ds}.searchdata_url_impression\`
-      WHERE data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 4 MONTH)
+      WHERE
+        data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 4 MONTH)
+        AND search_type = 'WEB'
       GROUP BY url, month
     ),
     ranked AS (

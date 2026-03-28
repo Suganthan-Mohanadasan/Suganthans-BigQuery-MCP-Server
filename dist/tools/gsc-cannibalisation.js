@@ -6,6 +6,7 @@ const client_js_1 = require("../client.js");
 async function gscCannibalisation(days = 28, minImpressions = 50, dataset) {
     const config = (0, client_js_1.getConfig)();
     const ds = dataset || config.defaultDataset || "searchconsole";
+    (0, client_js_1.validateIdentifier)(ds, "dataset");
     const sql = `
     WITH query_urls AS (
       SELECT
