@@ -30,9 +30,15 @@ const gsc_ngrams_js_1 = require("./tools/gsc-ngrams.js");
 const gsc_new_keywords_js_1 = require("./tools/gsc-new-keywords.js");
 const gsc_forecast_js_1 = require("./tools/gsc-forecast.js");
 const gsc_anomalies_js_1 = require("./tools/gsc-anomalies.js");
+const ga4_gsc_page_performance_js_1 = require("./tools/ga4-gsc-page-performance.js");
+const ga4_gsc_query_revenue_js_1 = require("./tools/ga4-gsc-query-revenue.js");
+const ga4_gsc_content_roi_js_1 = require("./tools/ga4-gsc-content-roi.js");
+const ga4_gsc_snippet_mismatch_js_1 = require("./tools/ga4-gsc-snippet-mismatch.js");
+const ga4_gsc_position_value_js_1 = require("./tools/ga4-gsc-position-value.js");
+const ga4_gsc_branded_performance_js_1 = require("./tools/ga4-gsc-branded-performance.js");
 const server = new mcp_js_1.McpServer({
     name: "bigquery-mcp",
-    version: "3.0.0",
+    version: "3.1.0",
 });
 function errorResponse(error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -489,10 +495,127 @@ server.tool("gsc_anomalies", "Detect traffic anomalies using BigQuery ML. Unlike
         return errorResponse(error);
     }
 });
+// ============================================================
+// GA4 + GSC BLENDING TOOLS (27-32)
+// Require both GA4 and GSC BigQuery exports
+// ============================================================
+const GA4_GUARDRAIL = " IMPORTANT: GA4 and GSC data are joined on normalised landing page URL. Join rates vary by site (typically 70-90%). Numbers may not match GA4 or GSC dashboards exactly due to URL normalisation, timezone differences (GSC uses Pacific Time, GA4 uses property timezone), and sampling. Report the join rate when relevant." + guardrails_js_1.GUARDRAIL_SUFFIX;
+// 27. GA4+GSC Page Performance
+server.tool("ga4_gsc_page_performance", "Landing pages with BOTH search performance (clicks, impressions, position from GSC) AND engagement data (sessions, engagement rate, conversions from GA4) side by side. Requires GA4 BigQuery export." + GA4_GUARDRAIL, {
+    days: zod_1.z.number().default(28).describe("Number of days to analyse"),
+    min_clicks: zod_1.z.number().default(10).describe("Minimum GSC clicks to include a page"),
+    max_rows: zod_1.z.number().default(50).describe("Maximum rows to return"),
+    gsc_dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
+    ga4_dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GA4 data (e.g. analytics_123456789)"),
+}, async ({ days, min_clicks, max_rows, gsc_dataset, ga4_dataset }) => {
+    try {
+        const results = await (0, ga4_gsc_page_performance_js_1.ga4GscPagePerformance)(days, min_clicks, max_rows, gsc_dataset, ga4_dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "ga4_gsc_page_performance", { days, min_clicks });
+        return {
+            content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+        };
+    }
+    catch (error) {
+        return errorResponse(error);
+    }
+});
+// 28. GA4+GSC Query Revenue Attribution
+server.tool("ga4_gsc_query_revenue", "Which search queries actually drive revenue and conversions? Uses proportional attribution: if a page gets clicks from 3 queries, revenue is split by click share. The 'revenue per keyword' metric SEOs have wanted for years. Requires GA4 BigQuery export." + GA4_GUARDRAIL, {
+    days: zod_1.z.number().default(28).describe("Number of days to analyse"),
+    min_clicks: zod_1.z.number().default(5).describe("Minimum clicks per query"),
+    max_rows: zod_1.z.number().default(50).describe("Maximum rows to return"),
+    gsc_dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
+    ga4_dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GA4 data"),
+}, async ({ days, min_clicks, max_rows, gsc_dataset, ga4_dataset }) => {
+    try {
+        const results = await (0, ga4_gsc_query_revenue_js_1.ga4GscQueryRevenue)(days, min_clicks, max_rows, gsc_dataset, ga4_dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "ga4_gsc_query_revenue", { days, min_clicks });
+        return {
+            content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+        };
+    }
+    catch (error) {
+        return errorResponse(error);
+    }
+});
+// 29. GA4+GSC Content ROI
+server.tool("ga4_gsc_content_roi", "Find pages that rank well but don't convert (fix the page, not the SEO) and pages that convert brilliantly but have low rankings (invest in SEO, the payoff is proven). Diagnoses each page. Requires GA4 BigQuery export." + GA4_GUARDRAIL, {
+    days: zod_1.z.number().default(28).describe("Number of days to analyse"),
+    min_clicks: zod_1.z.number().default(20).describe("Minimum GSC clicks to include"),
+    max_rows: zod_1.z.number().default(50).describe("Maximum rows to return"),
+    gsc_dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
+    ga4_dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GA4 data"),
+}, async ({ days, min_clicks, max_rows, gsc_dataset, ga4_dataset }) => {
+    try {
+        const results = await (0, ga4_gsc_content_roi_js_1.ga4GscContentRoi)(days, min_clicks, max_rows, gsc_dataset, ga4_dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "ga4_gsc_content_roi", { days, min_clicks });
+        return {
+            content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+        };
+    }
+    catch (error) {
+        return errorResponse(error);
+    }
+});
+// 30. GA4+GSC Snippet Mismatch
+server.tool("ga4_gsc_snippet_mismatch", "Find pages where SERP snippet performance doesn't match on-site engagement. High CTR + low engagement = misleading title/description. Low CTR + high engagement = great content with a bad snippet. Both are fixable. Requires GA4 BigQuery export." + GA4_GUARDRAIL, {
+    days: zod_1.z.number().default(28).describe("Number of days to analyse"),
+    min_clicks: zod_1.z.number().default(20).describe("Minimum GSC clicks to include"),
+    max_rows: zod_1.z.number().default(50).describe("Maximum rows to return"),
+    gsc_dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
+    ga4_dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GA4 data"),
+}, async ({ days, min_clicks, max_rows, gsc_dataset, ga4_dataset }) => {
+    try {
+        const results = await (0, ga4_gsc_snippet_mismatch_js_1.ga4GscSnippetMismatch)(days, min_clicks, max_rows, gsc_dataset, ga4_dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "ga4_gsc_snippet_mismatch", { days, min_clicks });
+        return {
+            content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+        };
+    }
+    catch (error) {
+        return errorResponse(error);
+    }
+});
+// 31. GA4+GSC Position Value
+server.tool("ga4_gsc_position_value", "What is each ranking position worth in revenue and conversions for YOUR site? Shows conversion rate and revenue per click by position bucket (1, 2-3, 4-5, 6-10, 11-20, 20+). Uses 90 days by default for statistical significance. Requires GA4 BigQuery export." + GA4_GUARDRAIL, {
+    days: zod_1.z.number().default(90).describe("Number of days to analyse (longer = more reliable)"),
+    max_rows: zod_1.z.number().default(20).describe("Maximum rows to return"),
+    gsc_dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
+    ga4_dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GA4 data"),
+}, async ({ days, max_rows, gsc_dataset, ga4_dataset }) => {
+    try {
+        const results = await (0, ga4_gsc_position_value_js_1.ga4GscPositionValue)(days, max_rows, gsc_dataset, ga4_dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "ga4_gsc_position_value", { days });
+        return {
+            content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+        };
+    }
+    catch (error) {
+        return errorResponse(error);
+    }
+});
+// 32. GA4+GSC Branded vs Non-Branded Performance
+server.tool("ga4_gsc_branded_performance", "Compare branded vs non-branded organic traffic with engagement and conversion overlay from GA4. Shows how each traffic type performs across clicks, CTR, engagement rate, conversions, and revenue. Requires GA4 BigQuery export." + GA4_GUARDRAIL, {
+    brand_terms: zod_1.z.string().describe("Comma-separated brand terms, e.g. 'suganthan,snippet digital,keyword insights'"),
+    days: zod_1.z.number().default(28).describe("Number of days to analyse"),
+    gsc_dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
+    ga4_dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GA4 data"),
+}, async ({ brand_terms, days, gsc_dataset, ga4_dataset }) => {
+    try {
+        const results = await (0, ga4_gsc_branded_performance_js_1.ga4GscBrandedPerformance)(brand_terms, days, gsc_dataset, ga4_dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "ga4_gsc_branded_performance", { brand_terms, days });
+        return {
+            content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+        };
+    }
+    catch (error) {
+        return errorResponse(error);
+    }
+});
 async function main() {
     const transport = new stdio_js_1.StdioServerTransport();
     await server.connect(transport);
-    console.error("BigQuery MCP server v3.0.0 running on stdio (26 tools)");
+    console.error("BigQuery MCP server v3.1.0 running on stdio (32 tools)");
 }
 main().catch((error) => {
     console.error("Fatal error:", error);
