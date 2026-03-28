@@ -22,10 +22,18 @@ import { gscCtrBenchmark } from "./tools/gsc-ctr-benchmark.js";
 import { gscAlerts } from "./tools/gsc-alerts.js";
 import { gscContentRecommendations } from "./tools/gsc-content-recommendations.js";
 import { gscReport } from "./tools/gsc-report.js";
+import { gscAnonymousTraffic } from "./tools/gsc-anonymous-traffic.js";
+import { gscSeasonal } from "./tools/gsc-seasonal.js";
+import { gscDeviceSplit } from "./tools/gsc-device-split.js";
+import { gscIntentBreakdown } from "./tools/gsc-intent-breakdown.js";
+import { gscNgrams } from "./tools/gsc-ngrams.js";
+import { gscNewKeywords } from "./tools/gsc-new-keywords.js";
+import { gscForecast } from "./tools/gsc-forecast.js";
+import { gscAnomalies } from "./tools/gsc-anomalies.js";
 
 const server = new McpServer({
   name: "bigquery-mcp",
-  version: "2.0.0",
+  version: "3.0.0",
 });
 
 function errorResponse(error: unknown) {
@@ -440,10 +448,187 @@ server.tool(
   }
 );
 
+// ============================================================
+// BIGQUERY-EXCLUSIVE TOOLS (19-26)
+// These use capabilities only possible with BigQuery bulk export
+// ============================================================
+
+// 19. GSC Anonymous Traffic
+server.tool(
+  "gsc_anonymous_traffic",
+  "Analyse anonymous (hidden) query traffic that the GSC API cannot show. Reveals what percentage of your clicks come from queries Google redacts, and which pages get the most hidden traffic. Only possible with BigQuery bulk export." + GUARDRAIL_SUFFIX,
+  {
+    days: z.number().default(28).describe("Number of days to analyse"),
+    dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
+  },
+  async ({ days, dataset }) => {
+    try {
+      const results = await gscAnonymousTraffic(days, dataset);
+      const wrapped = withMeta(results, "gsc_anonymous_traffic", { days });
+      return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+      };
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+);
+
+// 20. GSC Seasonal Analysis
+server.tool(
+  "gsc_seasonal",
+  "Year-over-year seasonal traffic analysis. Shows monthly clicks, impressions, CTR, and position with YoY comparison. Requires 12+ months of BigQuery data. Impossible with the 16-month rolling GSC API." + GUARDRAIL_SUFFIX,
+  {
+    dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
+  },
+  async ({ dataset }) => {
+    try {
+      const results = await gscSeasonal(dataset);
+      const wrapped = withMeta(results, "gsc_seasonal", {});
+      return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+      };
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+);
+
+// 21. GSC Device Split
+server.tool(
+  "gsc_device_split",
+  "Find queries where mobile and desktop rank different pages from your site. This device cannibalisation is invisible in the GSC UI and impossible to detect via the API's 3-dimension limit." + GUARDRAIL_SUFFIX,
+  {
+    days: z.number().default(28).describe("Number of days to analyse"),
+    min_clicks: z.number().default(5).describe("Minimum clicks threshold"),
+    dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
+  },
+  async ({ days, min_clicks, dataset }) => {
+    try {
+      const results = await gscDeviceSplit(days, min_clicks, dataset);
+      const wrapped = withMeta(results, "gsc_device_split", { days, min_clicks });
+      return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+      };
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+);
+
+// 22. GSC Intent Breakdown
+server.tool(
+  "gsc_intent_breakdown",
+  "Classify all your ranking queries by search intent (informational, transactional, commercial, navigational) using regex pattern matching at scale. Shows clicks, impressions, and CTR by intent category." + GUARDRAIL_SUFFIX,
+  {
+    days: z.number().default(28).describe("Number of days to analyse"),
+    dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
+  },
+  async ({ days, dataset }) => {
+    try {
+      const results = await gscIntentBreakdown(days, dataset);
+      const wrapped = withMeta(results, "gsc_intent_breakdown", { days });
+      return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+      };
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+);
+
+// 23. GSC N-Grams
+server.tool(
+  "gsc_ngrams",
+  "Extract the most common meaningful terms across your entire query set, ranked by clicks. A lightweight alternative to keyword clustering that reveals emerging topics and content themes." + GUARDRAIL_SUFFIX,
+  {
+    days: z.number().default(28).describe("Number of days to analyse"),
+    min_query_count: z.number().default(5).describe("Minimum number of queries a term must appear in"),
+    dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
+  },
+  async ({ days, min_query_count, dataset }) => {
+    try {
+      const results = await gscNgrams(days, min_query_count, dataset);
+      const wrapped = withMeta(results, "gsc_ngrams", { days, min_query_count });
+      return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+      };
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+);
+
+// 24. GSC New Keywords
+server.tool(
+  "gsc_new_keywords",
+  "Discover queries that appeared in your recent data but were not present in the baseline period. Useful for spotting new ranking opportunities, trending topics, or the impact of recently published content." + GUARDRAIL_SUFFIX,
+  {
+    recent_days: z.number().default(7).describe("Number of recent days to check"),
+    baseline_days: z.number().default(60).describe("Number of days for the baseline comparison period"),
+    min_impressions: z.number().default(10).describe("Minimum impressions in recent period"),
+    dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
+  },
+  async ({ recent_days, baseline_days, min_impressions, dataset }) => {
+    try {
+      const results = await gscNewKeywords(recent_days, baseline_days, min_impressions, dataset);
+      const wrapped = withMeta(results, "gsc_new_keywords", { recent_days, baseline_days, min_impressions });
+      return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+      };
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+);
+
+// 25. GSC Forecast
+server.tool(
+  "gsc_forecast",
+  "Forecast organic traffic using BigQuery ML ARIMA_PLUS. Trains a time-series model on your historical click data and projects future clicks with confidence intervals. Requires sufficient historical data (ideally 6+ months). This is only possible with BigQuery ML." + GUARDRAIL_SUFFIX,
+  {
+    horizon: z.number().default(30).describe("Number of days to forecast (default 30, max 365)"),
+    confidence_level: z.number().default(0.95).describe("Confidence level for prediction intervals (0.80 to 0.99)"),
+    dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
+  },
+  async ({ horizon, confidence_level, dataset }) => {
+    try {
+      const results = await gscForecast(horizon, confidence_level, dataset);
+      const wrapped = withMeta(results, "gsc_forecast", { horizon, confidence_level });
+      return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+      };
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+);
+
+// 26. GSC Anomalies
+server.tool(
+  "gsc_anomalies",
+  "Detect traffic anomalies using BigQuery ML. Unlike threshold-based alerts, this understands seasonality and weekly patterns, so it only flags genuinely unexpected traffic changes. Requires sufficient historical data (ideally 6+ months)." + GUARDRAIL_SUFFIX,
+  {
+    anomaly_threshold: z.number().default(0.95).describe("Anomaly probability threshold (0.80 to 0.99, higher = fewer but more significant anomalies)"),
+    dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
+  },
+  async ({ anomaly_threshold, dataset }) => {
+    try {
+      const results = await gscAnomalies(14, anomaly_threshold, dataset);
+      const wrapped = withMeta(results, "gsc_anomalies", { anomaly_threshold });
+      return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+      };
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+);
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("BigQuery MCP server v2.0.0 running on stdio (18 tools)");
+  console.error("BigQuery MCP server v3.0.0 running on stdio (26 tools)");
 }
 
 main().catch((error) => {

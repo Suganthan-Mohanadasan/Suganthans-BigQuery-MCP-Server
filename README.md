@@ -1,6 +1,6 @@
 # BigQuery MCP Server
 
-An MCP server that connects Claude to Google BigQuery. Query any dataset in natural language. Comes with 18 tools including a full suite of SEO analysis tools for Google Search Console bulk export data.
+An MCP server that connects Claude to Google BigQuery. Query any dataset in natural language. Comes with 26 tools including a full suite of SEO analysis tools for Google Search Console bulk export data, plus BigQuery exclusive features like ML forecasting, anomaly detection, and anonymous query analysis.
 
 ## What it does
 
@@ -28,9 +28,22 @@ An MCP server that connects Claude to Google BigQuery. Query any dataset in natu
 | 13 | **gsc_traffic_drops** | Pages that lost traffic with diagnosis: ranking loss, CTR collapse, or demand decline. |
 | 14 | **gsc_topic_cluster** | Aggregate performance for all pages matching a URL pattern, plus top pages and queries. |
 | 15 | **gsc_ctr_benchmark** | Compare actual CTR per page against industry benchmarks by position with verdicts. |
-| 16 | **gsc_alerts** | Severity-rated alerts for position drops, CTR collapses, click losses, and disappeared pages. |
+| 16 | **gsc_alerts** | Severity rated alerts for position drops, CTR collapses, click losses, and disappeared pages. |
 | 17 | **gsc_content_recommendations** | Prioritised actions by cross-referencing quick wins, content gaps, and cannibalisation data. |
 | 18 | **gsc_report** | Comprehensive markdown performance report covering all sections. |
+
+**BigQuery exclusive tools** (leverage BQ capabilities not available via the GSC API):
+
+| # | Tool | Description |
+|---|------|-------------|
+| 19 | **gsc_anonymous_traffic** | Analyse the ~46% of clicks hidden behind anonymous queries. Breakdown by URL. |
+| 20 | **gsc_seasonal** | Year over year monthly comparison with YoY change percentages. Spot seasonal patterns. |
+| 21 | **gsc_device_split** | Find queries where mobile and desktop rank entirely different pages. |
+| 22 | **gsc_intent_breakdown** | Classify all queries by search intent (informational, transactional, commercial, navigational). |
+| 23 | **gsc_ngrams** | Extract common terms from queries to find recurring themes and topic clusters. |
+| 24 | **gsc_new_keywords** | Discover queries appearing in recent data that weren't present in the baseline period. |
+| 25 | **gsc_forecast** | ARIMA_PLUS traffic forecasting using BigQuery ML. Predict clicks up to 365 days out. |
+| 26 | **gsc_anomalies** | ML powered anomaly detection. Automatically flags unusual traffic patterns. |
 
 ## Hallucination Guardrails
 
@@ -49,8 +62,10 @@ The GSC API is great for quick, real-time lookups. But BigQuery bulk export give
 
 - **Unsampled data** (the API samples at high volumes)
 - **Anonymous queries** (the API hides these entirely)
-- **Full historical depth** (16 months backfill + continuous daily export)
+- **Unlimited retention** (keep data forever vs 16 months in GSC)
 - **Any SQL query you want** (not limited to the API's fixed parameters)
+- **BigQuery ML** (forecasting and anomaly detection built in)
+- **~$12 to $24 per year** vs $15,000+ for equivalent paid tool subscriptions
 
 If you want the real-time API approach, see [Suganthan's GSC MCP Server](https://github.com/Suganthan-Mohanadasan/Suganthans-GSC-MCP). Both complement each other.
 
@@ -123,15 +138,18 @@ Once connected, just ask Claude questions:
 - "Are there any SEO alerts I should know about?"
 - "Generate a full performance report"
 - "What content should I create or update next?"
-- "Run a query to find my top 20 pages by clicks this month"
-- "How much would it cost to query the full impressions table?"
-- "Show me 10 sample rows from the url_impression table"
+- "How much of my traffic comes from anonymous queries?"
+- "Show me year over year seasonal trends"
+- "Forecast my traffic for the next 90 days"
+- "Are there any traffic anomalies I should investigate?"
+- "What new keywords appeared this week?"
+- "Break down my queries by search intent"
 
 Claude will use the appropriate tool, write SQL if needed, and interpret the results.
 
 ## Safety
 
-- **Read only.** Only SELECT queries are allowed. INSERT, UPDATE, DELETE, DROP, and other mutation statements are blocked. SQL comments and multi-statement queries are also caught.
+- **Read only.** Only SELECT queries are allowed. INSERT, UPDATE, DELETE, DROP, and other mutation statements are blocked. SQL comments and multi-statement queries are also caught. BigQuery ML statements are limited to CREATE OR REPLACE MODEL and SELECT only.
 - **Auto-LIMIT.** If your query has no LIMIT clause, one is automatically added based on max_rows.
 - **Input validation.** Dataset, table, and project names are validated against a strict pattern to prevent injection.
 - **Row limits.** Default 100 rows per query, configurable up to 10,000.

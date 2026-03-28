@@ -72,6 +72,62 @@ export async function runQuery(
   };
 }
 
+/**
+ * Run a BigQuery ML statement (CREATE MODEL, ML.FORECAST, ML.DETECT_ANOMALIES, etc.).
+ * Only allows CREATE OR REPLACE MODEL and SELECT/ML.* statements.
+ */
+export async function runMLStatement(
+  sql: string,
+  maxRows: number = 1000,
+  projectId?: string
+): Promise<{ rows: Record<string, unknown>[]; totalRows: number; bytesProcessed: string; message?: string }> {
+  const stripped = sql.replace(COMMENT_PATTERNS, " ").trim();
+
+  // Allow only CREATE OR REPLACE MODEL, SELECT, and ML.* functions
+  const isCreateModel = /^\s*CREATE\s+(OR\s+REPLACE\s+)?MODEL\b/i.test(stripped);
+  const isSelect = /^\s*SELECT\b/i.test(stripped);
+
+  if (!isCreateModel && !isSelect) {
+    throw new Error("ML statements must be CREATE OR REPLACE MODEL or SELECT queries (including ML.FORECAST, ML.DETECT_ANOMALIES, ML.EXPLAIN_FORECAST).");
+  }
+
+  const client = getBigQueryClient();
+  const config = getConfig();
+  const targetProject = projectId || config.projectId;
+
+  const [job] = await client.createQueryJob({
+    query: sql,
+    location: config.location,
+    maximumBytesBilled: String(50 * 1024 * 1024 * 1024), // 50GB for ML training
+    defaultDataset: config.defaultDataset
+      ? { projectId: targetProject, datasetId: config.defaultDataset }
+      : undefined,
+  });
+
+  if (isCreateModel) {
+    // CREATE MODEL doesn't return rows; wait for completion
+    await job.getMetadata();
+    const [metadata] = await job.getMetadata();
+    const bytesProcessed = metadata.statistics?.totalBytesProcessed || "0";
+    return {
+      rows: [],
+      totalRows: 0,
+      bytesProcessed: formatBytes(parseInt(bytesProcessed, 10)),
+      message: "Model created successfully.",
+    };
+  }
+
+  const [rows] = await job.getQueryResults({ maxResults: maxRows });
+  const [metadata] = await job.getMetadata();
+  const bytesProcessed = metadata.statistics?.totalBytesProcessed || "0";
+
+  return {
+    rows,
+    totalRows: rows.length,
+    bytesProcessed: formatBytes(parseInt(bytesProcessed, 10)),
+  };
+}
+
 export async function dryRunQuery(
   sql: string,
   projectId?: string
