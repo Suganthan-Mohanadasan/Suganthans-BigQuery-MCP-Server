@@ -87,8 +87,8 @@ In Google Cloud Console:
 ### 3. Install the server
 
 ```bash
-git clone https://github.com/Suganthan-Mohanadasan/BigQuery-MCP-Server.git
-cd BigQuery-MCP-Server
+git clone https://github.com/Suganthan-Mohanadasan/Suganthans-BigQuery-MCP-Server.git
+cd Suganthans-BigQuery-MCP-Server
 npm install
 npm run build
 ```
@@ -102,7 +102,7 @@ Add this to your Claude Desktop config (`~/Library/Application Support/Claude/cl
   "mcpServers": {
     "bigquery": {
       "command": "node",
-      "args": ["/path/to/BigQuery-MCP-Server/dist/index.js"],
+      "args": ["/path/to/Suganthans-BigQuery-MCP-Server/dist/index.js"],
       "env": {
         "BIGQUERY_PROJECT_ID": "your-project-id",
         "BIGQUERY_KEY_FILE": "/path/to/service-account-key.json",
