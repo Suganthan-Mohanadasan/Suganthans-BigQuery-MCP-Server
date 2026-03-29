@@ -4,83 +4,64 @@
 
 # BigQuery MCP Server
 
-26 SEO tools for your Google Search Console data warehouse. ML traffic forecasting, anomaly detection, anonymous query analysis, and 23 more. Open source, free, Apache 2.0.
+An MCP server for BigQuery that lets you ask Claude questions about your search data warehouse and get real answers. Not raw query results. Actual analysis with verdicts and recommendations.
+
+26 tools. ML forecasting. Anomaly detection. Anonymous query analysis. Free and open source.
 
 > **Full setup guide with screenshots:** [suganthan.com/blog/bigquery-mcp-server/](https://suganthan.com/blog/bigquery-mcp-server/)
 
-## What it looks like
+## See it in action
 
-Ask Claude a question. The right tool fires automatically.
+**"How much of my traffic is hidden behind anonymous queries?"**
 
-"**What are my quick win keywords?**" → Finds queries at positions 4 to 15 with high impressions. Striking distance opportunities sorted by traffic potential.
+![Anonymous traffic analysis showing the ~46% of clicks the GSC API hides](screenshots/anonymous-traffic.jpg)
 
-"**Forecast my traffic for the next 90 days**" → Builds an ARIMA_PLUS model on your historical data and returns daily predicted clicks with confidence intervals.
+**"Forecast my traffic for the next 90 days"**
 
-"**How much of my traffic is hidden behind anonymous queries?**" → Analyses the ~46% of clicks the GSC API completely hides from you. Broken down by URL.
+![ARIMA_PLUS traffic forecasting with daily predictions and confidence intervals](screenshots/forecast.jpg)
 
-"**Which pages are losing traffic and why?**" → Diagnoses each drop as a ranking loss, CTR collapse, or demand decline. Not guesswork. Data.
+**"Are there any traffic anomalies I should investigate?"**
 
-Not raw query results. Actual SEO analysis with exact numbers, verdicts, and recommendations.
+![ML anomaly detection flagging unusual traffic patterns](screenshots/anomalies.jpg)
 
-## 8 tools you can't get from the GSC API
+**"Show me year over year seasonal trends"**
 
-These use BigQuery capabilities that the Search Console API simply doesn't have.
+![Year over year monthly comparison with YoY percentage changes](screenshots/seasonal.jpg)
 
-| Tool | What it does |
-|------|-------------|
-| **gsc_anonymous_traffic** | Analyse the ~46% of clicks hidden behind anonymous queries. The API hides these entirely. |
-| **gsc_forecast** | ARIMA_PLUS traffic forecasting via BigQuery ML. Predict clicks up to 365 days out. |
-| **gsc_anomalies** | ML anomaly detection. Flags genuinely unusual traffic patterns, not just threshold breaches. |
-| **gsc_seasonal** | Year over year monthly comparison. Spot seasonal patterns with YoY percentage changes. |
-| **gsc_device_split** | Find queries where mobile and desktop rank entirely different pages from your site. |
-| **gsc_intent_breakdown** | Classify all queries by search intent: informational, transactional, commercial, navigational. |
-| **gsc_ngrams** | Extract recurring terms from queries. Find themes your content should cover. |
-| **gsc_new_keywords** | Discover queries appearing in recent data that weren't present before. |
+**"Show me queries where mobile and desktop rank different pages"**
 
-## 12 GSC analysis tools
+![Device split analysis showing ranking discrepancies](screenshots/device-split.jpg)
 
-The same analysis tools from the [GSC MCP server](https://github.com/Suganthan-Mohanadasan/Suganthans-GSC-MCP), rebuilt to run on BigQuery's unsampled data.
+**"Break down my queries by search intent"**
 
-| Tool | What it does |
-|------|-------------|
-| **gsc_quick_wins** | Striking distance keywords (positions 4 to 15). |
-| **gsc_ctr_opportunities** | Pages with CTR below benchmark for their position. |
-| **gsc_content_gaps** | High impression queries ranking beyond position 20. |
-| **gsc_site_snapshot** | Site overview with period comparison. |
-| **gsc_content_decay** | Pages declining over 3 consecutive months. |
-| **gsc_cannibalisation** | Keywords where multiple pages compete. |
-| **gsc_traffic_drops** | Lost traffic with diagnosis (ranking, CTR, or demand). |
-| **gsc_topic_cluster** | Performance for pages matching a URL pattern. |
-| **gsc_ctr_benchmark** | Actual CTR vs industry benchmarks with verdicts. |
-| **gsc_alerts** | Severity rated alerts for drops and disappearances. |
-| **gsc_content_recommendations** | Prioritised actions from cross-referencing all data. |
-| **gsc_report** | Full markdown performance report. |
+![Intent classification: informational, transactional, commercial, navigational](screenshots/intent.jpg)
 
-## 6 general purpose tools
+**"What are the most common terms in my queries?"**
 
-Work with any BigQuery dataset, not just GSC.
+![N-gram extraction showing recurring themes](screenshots/ngrams.jpg)
 
-| Tool | What it does |
-|------|-------------|
-| **query** | Run any SELECT query. Claude writes the SQL for you. |
-| **query_cost_estimate** | Dry run to see bytes scanned before executing. |
-| **list_datasets** | Discover available datasets in your project. |
-| **list_tables** | All tables and schemas in a dataset. |
-| **describe_table** | Column types, row counts, partitioning, size. |
-| **sample_rows** | Preview rows without writing SQL. |
+**"What new keywords appeared this week?"**
 
-## Why BigQuery instead of the GSC API?
+![New keyword discovery: queries appearing for the first time](screenshots/new-keywords.jpg)
 
-| | GSC API | BigQuery bulk export |
-|---|---------|---------------------|
-| Sampling | Sampled at high volumes | Unsampled |
-| Anonymous queries | Hidden entirely | Included |
-| History | Rolling 16 months | Permanent (forward only, no backfill) |
-| Query flexibility | Fixed parameters | Any SQL you want |
-| ML capabilities | None | ARIMA forecasting, anomaly detection |
-| Cost | Free | ~$12 to $24/year |
+## What you can ask
 
-Both complement each other. Use the [GSC MCP server](https://github.com/Suganthan-Mohanadasan/Suganthans-GSC-MCP) for quick real-time lookups. Use this for deeper analysis.
+```
+What are my quick win keywords?
+Which pages are losing traffic and why?
+Forecast my traffic for the next 90 days
+Are there any traffic anomalies I should investigate?
+How much of my traffic comes from anonymous queries?
+Show me year over year seasonal trends
+What new keywords appeared this week?
+Break down my queries by search intent
+Show me queries where multiple pages are competing
+Generate a full performance report
+How does my CTR compare to benchmarks?
+How is my /blog/ cluster performing?
+Check for any SEO alerts in the last 7 days
+Give me content recommendations
+```
 
 ## Quick start
 
@@ -110,32 +91,81 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 }
 ```
 
-> **Need help with BigQuery setup, service accounts, or permissions?** The [full guide](https://suganthan.com/blog/bigquery-mcp-server/) walks through every step with screenshots.
+Your service account needs three IAM roles: **BigQuery Data Editor**, **BigQuery Data Viewer**, and **BigQuery Job User**.
 
-## What you can ask
+> **Need help with BigQuery setup, bulk export, service accounts, or permissions?** The [full guide](https://suganthan.com/blog/bigquery-mcp-server/) walks through every step with screenshots.
 
-```
-What are my quick win keywords?
-Which pages are losing traffic and why?
-Forecast my traffic for the next 90 days
-Are there any traffic anomalies I should investigate?
-How much of my traffic comes from anonymous queries?
-Show me year over year seasonal trends
-What new keywords appeared this week?
-Break down my queries by search intent
-Show me queries where multiple pages are competing
-Generate a full performance report
-```
+## All 26 tools
 
-## Safety
+### BigQuery exclusive (8)
 
-**Read only.** Only SELECT queries allowed. All mutations blocked. BigQuery ML limited to model creation and SELECT.
+These use BigQuery capabilities the Search Console API simply doesn't have.
 
-**Cost controlled.** Auto-LIMIT on queries, 10GB bytes billed cap, dry run cost preview.
+| Tool | What it answers |
+|---|---|
+| `gsc_anonymous_traffic` | How much traffic is hidden behind anonymous queries? The API hides ~46% of clicks entirely. |
+| `gsc_forecast` | ARIMA_PLUS traffic forecasting via BigQuery ML. Predict clicks up to 365 days out. |
+| `gsc_anomalies` | ML anomaly detection. Flags genuinely unusual traffic patterns, not just threshold breaches. |
+| `gsc_seasonal` | Year over year monthly comparison. Spot seasonal patterns with YoY percentage changes. |
+| `gsc_device_split` | Queries where mobile and desktop rank entirely different pages from your site. |
+| `gsc_intent_breakdown` | Classify all queries by search intent: informational, transactional, commercial, navigational. |
+| `gsc_ngrams` | Extract recurring terms from queries. Find themes your content should cover. |
+| `gsc_new_keywords` | Queries appearing in recent data that weren't present before. |
 
-**Input validated.** All identifiers checked against strict patterns. No injection vectors.
+### GSC analysis (12)
 
-**Hallucination guardrails.** Every GSC tool instructs Claude to report exact numbers, avoid speculation, and flag insufficient data. Every response includes `_meta` provenance.
+The same analysis tools from the [GSC MCP server](https://github.com/Suganthan-Mohanadasan/Suganthans-GSC-MCP), rebuilt to run on BigQuery's unsampled data.
+
+| Tool | What it answers |
+|---|---|
+| `gsc_quick_wins` | Keywords at positions 4 to 15 with high impressions, scored by opportunity |
+| `gsc_ctr_opportunities` | Pages with high impressions but CTR below expected for their position |
+| `gsc_content_gaps` | Topics with search demand but no real content targeting them |
+| `gsc_site_snapshot` | How is the site doing overall? Clicks, impressions, CTR, position with period comparison |
+| `gsc_content_decay` | Pages declining across three consecutive 30 day periods |
+| `gsc_cannibalisation` | Keywords where multiple pages compete against each other |
+| `gsc_traffic_drops` | What lost traffic, and whether it's a ranking loss, CTR collapse, or demand decline |
+| `gsc_topic_cluster` | Aggregated performance for all pages matching a URL path pattern |
+| `gsc_ctr_benchmark` | Your actual CTR per position vs industry benchmarks |
+| `gsc_alerts` | Position drops, CTR collapses, click losses, disappeared pages. Severity rated |
+| `gsc_content_recommendations` | Prioritised actions: pages to update, content to create, pages to consolidate |
+| `gsc_report` | Full markdown performance report |
+
+### General purpose (6)
+
+Work with any BigQuery dataset, not just GSC.
+
+| Tool | What it does |
+|---|---|
+| `query` | Run any SELECT query. Claude writes the SQL for you. |
+| `query_cost_estimate` | Dry run to see bytes scanned before executing. |
+| `list_datasets` | Discover available datasets in your project. |
+| `list_tables` | All tables and schemas in a dataset. |
+| `describe_table` | Column types, row counts, partitioning, size. |
+| `sample_rows` | Preview rows without writing SQL. |
+
+## Why BigQuery instead of the GSC API?
+
+| | GSC API | BigQuery bulk export |
+|---|---------|---------------------|
+| Sampling | Sampled at high volumes | Unsampled |
+| Anonymous queries | Hidden entirely | Included |
+| History | Rolling 16 months | Permanent (forward only, no backfill) |
+| Query flexibility | Fixed parameters | Any SQL you want |
+| ML capabilities | None | ARIMA forecasting, anomaly detection |
+| Cost | Free | ~$12 to $24/year |
+
+Both complement each other. Use the [GSC MCP server](https://github.com/Suganthan-Mohanadasan/Suganthans-GSC-MCP) for quick real time lookups. Use this for deeper analysis.
+
+## What makes this different
+
+**Analysis, not just queries.** Most BigQuery tools give you raw SQL access. This ships with 20 pre-built SEO analysis tools: opportunity scoring, cannibalisation detection, decay tracking, CTR benchmarking, traffic drop diagnosis, ML forecasting. You ask a question, it runs the analysis and tells you what to do.
+
+**ML built in.** ARIMA_PLUS traffic forecasting and anomaly detection run directly in BigQuery. No external services, no extra cost beyond standard BigQuery pricing.
+
+**Hallucination guardrails.** Every tool instructs Claude to base analysis only on returned data. Provenance metadata in every response. Exact numbers, no speculation, insufficient data flagged.
+
+**Read only. Cost controlled.** Only SELECT queries allowed. All mutations blocked. Auto-LIMIT on queries, 10GB bytes billed cap, dry run cost preview. EXPORT, CALL, and EXECUTE statements blocked.
 
 ## Environment variables
 
@@ -148,8 +178,12 @@ Generate a full performance report
 
 ## Full guide
 
-Step by step setup with screenshots, cost breakdowns, and honest comparison with dedicated SEO tools: **[suganthan.com/blog/bigquery-mcp-server/](https://suganthan.com/blog/bigquery-mcp-server/)**
+Step by step setup with screenshots, cost breakdowns, and honest comparison with dedicated SEO tools:
+
+**[suganthan.com/blog/bigquery-mcp-server/](https://suganthan.com/blog/bigquery-mcp-server/)**
 
 ## Licence
 
 Apache 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE) for details. Use it, fork it, build on it. Just keep the attribution.
+
+Built by [Suganthan Mohanadasan](https://suganthan.com). If you find it useful, star it.
