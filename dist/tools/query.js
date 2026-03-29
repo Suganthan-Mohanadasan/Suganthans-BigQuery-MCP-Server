@@ -5,7 +5,7 @@ exports.runQuery = runQuery;
 exports.runMLStatement = runMLStatement;
 exports.dryRunQuery = dryRunQuery;
 const client_js_1 = require("../client.js");
-const BLOCKED_PATTERNS = /\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE|MERGE|GRANT|REVOKE)\b/i;
+const BLOCKED_PATTERNS = /\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE|MERGE|GRANT|REVOKE|EXPORT|CALL|EXECUTE)\b/i;
 const COMMENT_PATTERNS = /(\/\*[\s\S]*?\*\/|--[^\n]*)/g;
 function sanitiseSQL(sql) {
     const stripped = sql.replace(COMMENT_PATTERNS, " ");

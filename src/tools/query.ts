@@ -1,6 +1,6 @@
 import { getBigQueryClient, getConfig } from "../client.js";
 
-const BLOCKED_PATTERNS = /\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE|MERGE|GRANT|REVOKE)\b/i;
+const BLOCKED_PATTERNS = /\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE|MERGE|GRANT|REVOKE|EXPORT|CALL|EXECUTE)\b/i;
 const COMMENT_PATTERNS = /(\/\*[\s\S]*?\*\/|--[^\n]*)/g;
 
 function sanitiseSQL(sql: string): void {
