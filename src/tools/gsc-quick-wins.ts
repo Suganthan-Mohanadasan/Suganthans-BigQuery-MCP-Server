@@ -17,7 +17,7 @@ export async function gscQuickWins(
       SUM(clicks) AS clicks,
       SUM(impressions) AS impressions,
       ROUND(SAFE_DIVIDE(SUM(clicks), SUM(impressions)) * 100, 2) AS ctr_pct,
-      ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)), 1) AS avg_position,
+      ROUND(SAFE_DIVIDE(SUM(sum_top_position), SUM(impressions)), 1) AS avg_position,
       ROUND(SUM(impressions) * (0.11 - SAFE_DIVIDE(SUM(clicks), SUM(impressions))), 0) AS opportunity
     FROM \`${ds}.searchdata_site_impression\`
     WHERE

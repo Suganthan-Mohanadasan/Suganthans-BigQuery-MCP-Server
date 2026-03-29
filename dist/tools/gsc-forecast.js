@@ -30,7 +30,18 @@ async function gscForecast(horizon = 30, confidenceLevel = 0.95, dataset) {
     HAVING total_clicks > 0
     ORDER BY 1
   `;
-    const model = await (0, query_js_1.runMLStatement)(createSQL);
+    let model;
+    try {
+        model = await (0, query_js_1.runMLStatement)(createSQL);
+    }
+    catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg.includes("permission") || msg.includes("Access Denied")) {
+            throw new Error(`BigQuery ML requires the "BigQuery Data Editor" role on your service account. ` +
+                `Grant it in IAM, then restart the MCP server. Original error: ${msg}`);
+        }
+        throw e;
+    }
     // Step 2: Forecast
     const forecastSQL = `
     SELECT

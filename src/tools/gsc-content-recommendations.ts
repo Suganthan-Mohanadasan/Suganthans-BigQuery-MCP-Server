@@ -26,11 +26,16 @@ export async function gscContentRecommendations(
   maxRecommendations: number = 10,
   dataset?: string
 ): Promise<RecommendationResult> {
-  const [wins, gaps, cannib] = await Promise.all([
+  const [winsResult, gapsResult, cannibResult] = await Promise.allSettled([
     gscQuickWins(days, 50, 15, dataset),
     gscContentGaps(90, 30, 20, dataset),
     gscCannibalisation(days, 30, dataset),
   ]);
+
+  const emptyResult = { rows: [], totalRows: 0, bytesProcessed: "0 bytes" };
+  const wins = winsResult.status === "fulfilled" ? winsResult.value : emptyResult;
+  const gaps = gapsResult.status === "fulfilled" ? gapsResult.value : emptyResult;
+  const cannib = cannibResult.status === "fulfilled" ? cannibResult.value : emptyResult;
 
   const recs: Recommendation[] = [];
 

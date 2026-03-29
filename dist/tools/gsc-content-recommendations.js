@@ -5,11 +5,15 @@ const gsc_quick_wins_js_1 = require("./gsc-quick-wins.js");
 const gsc_content_gaps_js_1 = require("./gsc-content-gaps.js");
 const gsc_cannibalisation_js_1 = require("./gsc-cannibalisation.js");
 async function gscContentRecommendations(days = 28, maxRecommendations = 10, dataset) {
-    const [wins, gaps, cannib] = await Promise.all([
+    const [winsResult, gapsResult, cannibResult] = await Promise.allSettled([
         (0, gsc_quick_wins_js_1.gscQuickWins)(days, 50, 15, dataset),
         (0, gsc_content_gaps_js_1.gscContentGaps)(90, 30, 20, dataset),
         (0, gsc_cannibalisation_js_1.gscCannibalisation)(days, 30, dataset),
     ]);
+    const emptyResult = { rows: [], totalRows: 0, bytesProcessed: "0 bytes" };
+    const wins = winsResult.status === "fulfilled" ? winsResult.value : emptyResult;
+    const gaps = gapsResult.status === "fulfilled" ? gapsResult.value : emptyResult;
+    const cannib = cannibResult.status === "fulfilled" ? cannibResult.value : emptyResult;
     const recs = [];
     // Update recommendations from quick wins
     for (const win of wins.rows.slice(0, 20)) {

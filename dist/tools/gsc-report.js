@@ -36,8 +36,13 @@ async function gscReport(days = 28, includeSections, dataset) {
         promises.recommendations = (0, gsc_content_recommendations_js_1.gscContentRecommendations)(days, 10, dataset);
     const results = {};
     const keys = Object.keys(promises);
-    const values = await Promise.all(Object.values(promises));
-    keys.forEach((key, i) => { results[key] = values[i]; });
+    const settled = await Promise.allSettled(Object.values(promises));
+    keys.forEach((key, i) => {
+        if (settled[i].status === "fulfilled") {
+            results[key] = settled[i].value;
+        }
+        // Rejected sections are silently omitted from the report
+    });
     const lines = [];
     lines.push(`# GSC Performance Report (BigQuery)`);
     lines.push(`**Date:** ${date}`);

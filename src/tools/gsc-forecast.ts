@@ -38,7 +38,19 @@ export async function gscForecast(
     ORDER BY 1
   `;
 
-  const model = await runMLStatement(createSQL);
+  let model;
+  try {
+    model = await runMLStatement(createSQL);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes("permission") || msg.includes("Access Denied")) {
+      throw new Error(
+        `BigQuery ML requires the "BigQuery Data Editor" role on your service account. ` +
+        `Grant it in IAM, then restart the MCP server. Original error: ${msg}`
+      );
+    }
+    throw e;
+  }
 
   // Step 2: Forecast
   const forecastSQL = `

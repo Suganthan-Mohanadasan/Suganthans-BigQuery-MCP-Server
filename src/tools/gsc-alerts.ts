@@ -29,7 +29,7 @@ export async function gscAlerts(
         SUM(impressions) AS impressions,
         ROUND(SAFE_DIVIDE(SUM(clicks), SUM(impressions)) * 100, 2) AS ctr_pct,
         ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)), 1) AS avg_position
-      FROM \`${ds}.searchdata_site_impression\`
+      FROM \`${ds}.searchdata_url_impression\`
       WHERE
         data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
         AND search_type = 'WEB'
@@ -44,7 +44,7 @@ export async function gscAlerts(
         SUM(impressions) AS impressions,
         ROUND(SAFE_DIVIDE(SUM(clicks), SUM(impressions)) * 100, 2) AS ctr_pct,
         ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)), 1) AS avg_position
-      FROM \`${ds}.searchdata_site_impression\`
+      FROM \`${ds}.searchdata_url_impression\`
       WHERE
         data_date BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL ${days * 2} DAY)
           AND DATE_SUB(CURRENT_DATE(), INTERVAL ${days + 1} DAY)
@@ -93,7 +93,7 @@ export async function gscAlerts(
   const disappearedSQL = `
     WITH current_period AS (
       SELECT DISTINCT query, url
-      FROM \`${ds}.searchdata_site_impression\`
+      FROM \`${ds}.searchdata_url_impression\`
       WHERE
         data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
         AND search_type = 'WEB'
@@ -106,7 +106,7 @@ export async function gscAlerts(
         SUM(clicks) AS clicks,
         SUM(impressions) AS impressions,
         ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)), 1) AS avg_position
-      FROM \`${ds}.searchdata_site_impression\`
+      FROM \`${ds}.searchdata_url_impression\`
       WHERE
         data_date BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL ${days * 2} DAY)
           AND DATE_SUB(CURRENT_DATE(), INTERVAL ${days + 1} DAY)

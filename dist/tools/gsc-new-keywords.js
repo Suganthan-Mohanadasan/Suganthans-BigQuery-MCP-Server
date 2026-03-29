@@ -13,7 +13,7 @@ async function gscNewKeywords(recentDays = 7, baselineDays = 60, minImpressions 
         query,
         SUM(clicks) AS clicks,
         SUM(impressions) AS impressions,
-        ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)), 1) AS avg_position
+        ROUND(SAFE_DIVIDE(SUM(sum_top_position), SUM(impressions)), 1) AS avg_position
       FROM \`${ds}.searchdata_site_impression\`
       WHERE
         data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${recentDays} DAY)

@@ -14,8 +14,8 @@ export async function gscTopicCluster(
   const ds = dataset || config.defaultDataset || "searchconsole";
   validateIdentifier(ds, "dataset");
 
-  // Escape single quotes in the pattern for SQL safety
-  const safePattern = urlPattern.replace(/'/g, "\\'");
+  // Escape single quotes in the pattern for SQL safety (double them for SQL)
+  const safePattern = urlPattern.replace(/'/g, "''");
 
   const summarySQL = `
     SELECT
@@ -56,7 +56,7 @@ export async function gscTopicCluster(
       SUM(impressions) AS impressions,
       ROUND(SAFE_DIVIDE(SUM(clicks), SUM(impressions)) * 100, 2) AS ctr_pct,
       ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)), 1) AS avg_position
-    FROM \`${ds}.searchdata_site_impression\`
+    FROM \`${ds}.searchdata_url_impression\`
     WHERE
       data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
       AND url LIKE '%${safePattern}%'

@@ -25,13 +25,18 @@ export async function listTables(
 
   const tableQuery = `
     SELECT
-      table_name,
-      table_type,
-      CAST(COALESCE(row_count, 0) AS STRING) AS row_count,
-      CAST(COALESCE(size_bytes, 0) AS STRING) AS size_bytes,
-      CAST(creation_time AS STRING) AS creation_time
-    FROM \`${targetProject}.${dataset}.INFORMATION_SCHEMA.TABLES\`
-    ORDER BY table_name
+      table_id AS table_name,
+      CASE type
+        WHEN 1 THEN 'BASE TABLE'
+        WHEN 2 THEN 'VIEW'
+        WHEN 3 THEN 'EXTERNAL'
+        ELSE 'TABLE'
+      END AS table_type,
+      CAST(row_count AS STRING) AS row_count,
+      CAST(size_bytes AS STRING) AS size_bytes,
+      CAST(TIMESTAMP_MILLIS(creation_time) AS STRING) AS creation_time
+    FROM \`${targetProject}.${dataset}.__TABLES__\`
+    ORDER BY table_id
   `;
 
   const columnQuery = `

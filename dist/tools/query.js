@@ -86,9 +86,18 @@ async function runMLStatement(sql, maxRows = 1000, projectId) {
             : undefined,
     });
     if (isCreateModel) {
-        // CREATE MODEL doesn't return rows; wait for completion
-        await job.getMetadata();
-        const [metadata] = await job.getMetadata();
+        // CREATE MODEL is a long-running job; poll until complete
+        let metadata;
+        while (true) {
+            [metadata] = await job.getMetadata();
+            const status = metadata.status?.state;
+            if (status === "DONE")
+                break;
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
+        if (metadata.status?.errorResult) {
+            throw new Error(metadata.status.errorResult.message);
+        }
         const bytesProcessed = metadata.statistics?.totalBytesProcessed || "0";
         return {
             rows: [],
@@ -119,8 +128,8 @@ async function dryRunQuery(sql, projectId) {
             ? { projectId: targetProject, datasetId: config.defaultDataset }
             : undefined,
     });
-    const [metadata] = await job.getMetadata();
-    const bytesRaw = parseInt(metadata.statistics?.totalBytesProcessed || "0", 10);
+    // Dry run jobs are ephemeral; metadata is on the job object, not fetchable via getMetadata()
+    const bytesRaw = parseInt(job.metadata?.statistics?.totalBytesProcessed || "0", 10);
     return {
         bytesProcessed: formatBytes(bytesRaw),
         bytesRaw,

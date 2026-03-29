@@ -17,7 +17,7 @@ async function gscAlerts(days = 7, positionDropThreshold = 20, ctrDropPct = 50, 
         SUM(impressions) AS impressions,
         ROUND(SAFE_DIVIDE(SUM(clicks), SUM(impressions)) * 100, 2) AS ctr_pct,
         ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)), 1) AS avg_position
-      FROM \`${ds}.searchdata_site_impression\`
+      FROM \`${ds}.searchdata_url_impression\`
       WHERE
         data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
         AND search_type = 'WEB'
@@ -32,7 +32,7 @@ async function gscAlerts(days = 7, positionDropThreshold = 20, ctrDropPct = 50, 
         SUM(impressions) AS impressions,
         ROUND(SAFE_DIVIDE(SUM(clicks), SUM(impressions)) * 100, 2) AS ctr_pct,
         ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)), 1) AS avg_position
-      FROM \`${ds}.searchdata_site_impression\`
+      FROM \`${ds}.searchdata_url_impression\`
       WHERE
         data_date BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL ${days * 2} DAY)
           AND DATE_SUB(CURRENT_DATE(), INTERVAL ${days + 1} DAY)
@@ -80,7 +80,7 @@ async function gscAlerts(days = 7, positionDropThreshold = 20, ctrDropPct = 50, 
     const disappearedSQL = `
     WITH current_period AS (
       SELECT DISTINCT query, url
-      FROM \`${ds}.searchdata_site_impression\`
+      FROM \`${ds}.searchdata_url_impression\`
       WHERE
         data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
         AND search_type = 'WEB'
@@ -93,7 +93,7 @@ async function gscAlerts(days = 7, positionDropThreshold = 20, ctrDropPct = 50, 
         SUM(clicks) AS clicks,
         SUM(impressions) AS impressions,
         ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)), 1) AS avg_position
-      FROM \`${ds}.searchdata_site_impression\`
+      FROM \`${ds}.searchdata_url_impression\`
       WHERE
         data_date BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL ${days * 2} DAY)
           AND DATE_SUB(CURRENT_DATE(), INTERVAL ${days + 1} DAY)

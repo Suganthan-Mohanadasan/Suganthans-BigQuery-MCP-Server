@@ -80,9 +80,11 @@ In Google Search Console: Settings → Bulk data export → Set up BigQuery expo
 In Google Cloud Console:
 
 1. Go to IAM & Admin → Service Accounts
-2. Create a service account
-3. Grant it **BigQuery Data Viewer** and **BigQuery Job User** roles
+2. Create a service account (e.g. `bigquery-mcp-reader`)
+3. Grant it 3 roles: **BigQuery Data Editor**, **BigQuery Data Viewer**, and **BigQuery Job User**
 4. Create a JSON key and download it
+
+Why Data Editor? The ML tools (forecasting and anomaly detection) need to create temporary models. If you only want read-only access, Data Viewer + Job User is enough, but the ML tools will return a clear error.
 
 ### 3. Install the server
 

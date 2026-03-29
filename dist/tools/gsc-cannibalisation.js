@@ -15,7 +15,7 @@ async function gscCannibalisation(days = 28, minImpressions = 50, dataset) {
         SUM(clicks) AS clicks,
         SUM(impressions) AS impressions,
         ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)), 1) AS avg_position
-      FROM \`${ds}.searchdata_site_impression\`
+      FROM \`${ds}.searchdata_url_impression\`
       WHERE
         data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
         AND is_anonymized_query = false

@@ -10,32 +10,44 @@ export async function gscSiteSnapshot(
   validateIdentifier(ds, "dataset");
 
   const sql = `
-    WITH current_period AS (
+    WITH current_queries AS (
       SELECT
         SUM(clicks) AS clicks,
         SUM(impressions) AS impressions,
         ROUND(SAFE_DIVIDE(SUM(clicks), SUM(impressions)) * 100, 2) AS ctr_pct,
-        ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)), 1) AS avg_position,
-        COUNT(DISTINCT url) AS unique_pages,
+        ROUND(SAFE_DIVIDE(SUM(sum_top_position), SUM(impressions)), 1) AS avg_position,
         COUNT(DISTINCT query) AS unique_queries
       FROM \`${ds}.searchdata_site_impression\`
       WHERE
         data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
         AND search_type = 'WEB'
     ),
-    prior_period AS (
+    prior_queries AS (
       SELECT
         SUM(clicks) AS clicks,
         SUM(impressions) AS impressions,
         ROUND(SAFE_DIVIDE(SUM(clicks), SUM(impressions)) * 100, 2) AS ctr_pct,
-        ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)), 1) AS avg_position,
-        COUNT(DISTINCT url) AS unique_pages,
+        ROUND(SAFE_DIVIDE(SUM(sum_top_position), SUM(impressions)), 1) AS avg_position,
         COUNT(DISTINCT query) AS unique_queries
       FROM \`${ds}.searchdata_site_impression\`
       WHERE
         data_date BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL ${days * 2} DAY)
           AND DATE_SUB(CURRENT_DATE(), INTERVAL ${days + 1} DAY)
         AND search_type = 'WEB'
+    ),
+    current_pages AS (
+      SELECT COUNT(DISTINCT url) AS unique_pages
+      FROM \`${ds}.searchdata_url_impression\`
+      WHERE data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
+        AND search_type = 'WEB'
+    ),
+    current_period AS (
+      SELECT cq.*, cp.unique_pages
+      FROM current_queries cq CROSS JOIN current_pages cp
+    ),
+    prior_period AS (
+      SELECT pq.*, 0 AS unique_pages
+      FROM prior_queries pq
     )
     SELECT
       c.clicks AS current_clicks,

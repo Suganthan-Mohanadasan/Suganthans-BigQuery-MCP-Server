@@ -21,7 +21,7 @@ async function gscDeviceSplit(days = 28, minClicks = 5, dataset) {
           PARTITION BY query, device
           ORDER BY SUM(clicks) DESC
         ) AS rn
-      FROM \`${ds}.searchdata_site_impression\`
+      FROM \`${ds}.searchdata_url_impression\`
       WHERE
         data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
         AND is_anonymized_query = false

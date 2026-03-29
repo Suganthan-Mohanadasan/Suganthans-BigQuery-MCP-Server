@@ -42,8 +42,13 @@ export async function gscReport(
 
   const results: Record<string, unknown> = {};
   const keys = Object.keys(promises);
-  const values = await Promise.all(Object.values(promises));
-  keys.forEach((key, i) => { results[key] = values[i]; });
+  const settled = await Promise.allSettled(Object.values(promises));
+  keys.forEach((key, i) => {
+    if (settled[i].status === "fulfilled") {
+      results[key] = (settled[i] as PromiseFulfilledResult<unknown>).value;
+    }
+    // Rejected sections are silently omitted from the report
+  });
 
   const lines: string[] = [];
   lines.push(`# GSC Performance Report (BigQuery)`);
