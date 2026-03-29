@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/header.png" alt="Google Search Console → BigQuery → Claude" width="100%">
+</p>
+
 # BigQuery MCP Server
 
 26 SEO tools for your Google Search Console data warehouse. ML traffic forecasting, anomaly detection, anonymous query analysis, and 23 more. Open source, free, Apache 2.0.
