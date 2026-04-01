@@ -165,6 +165,8 @@ Both complement each other. Use the [GSC MCP server](https://github.com/Sugantha
 
 **Hallucination guardrails.** Every tool instructs Claude to base analysis only on returned data. Provenance metadata in every response. Exact numbers, no speculation, insufficient data flagged.
 
+**Visual dashboards.** Results render as rich, interactive visualisations in Claude Desktop. Summary cards, colour coded indicators, bar charts, and tabbed sections. Not plain text dumps.
+
 **Read only. Cost controlled.** Only SELECT queries allowed. All mutations blocked. Auto-LIMIT on queries, 10GB bytes billed cap, dry run cost preview. EXPORT, CALL, and EXECUTE statements blocked.
 
 ## Environment variables
