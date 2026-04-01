@@ -184,6 +184,14 @@ Step by step setup with screenshots, cost breakdowns, and honest comparison with
 
 **[suganthan.com/blog/bigquery-mcp-server/](https://suganthan.com/blog/bigquery-mcp-server/)**
 
+## Changelog
+
+**v3.1.0** Visual dashboard rendering. All GSC analysis tools now produce rich, interactive visualisations in Claude Desktop with summary cards, colour coded indicators, bar charts, and tabbed sections instead of plain text output. No reinstall needed, just restart Claude Desktop.
+
+![Visual dashboard rendering in Claude Desktop](screenshots/visual-dashboard.jpg)
+
+**v3.0.0** Initial release with 26 tools: 8 BigQuery exclusives (anonymous traffic, ML forecasting, anomaly detection, seasonal analysis, device split, intent breakdown, N-grams, new keywords), 12 GSC analysis tools, and 6 general purpose BigQuery tools.
+
 ## Licence
 
 Apache 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE) for details. Use it, fork it, build on it. Just keep the attribution.
