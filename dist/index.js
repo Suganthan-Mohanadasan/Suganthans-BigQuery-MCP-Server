@@ -151,7 +151,7 @@ server.tool("sample_rows", "Preview sample rows from a table without writing SQL
 // GSC ANALYSIS TOOLS (7-18)
 // ============================================================
 // 7. GSC Quick Wins
-server.tool("gsc_quick_wins", "Find keywords from GSC bulk export data at positions 4 to 15 with high impressions. These are striking distance keywords that could be pushed to page one. Sorted by traffic opportunity." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_quick_wins", "Find keywords from GSC bulk export data at positions 4 to 15 with high impressions. These are striking distance keywords that could be pushed to page one. Sorted by traffic opportunity." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     min_impressions: zod_1.z.number().default(100).describe("Minimum impressions threshold"),
     max_position: zod_1.z.number().default(15).describe("Maximum position to include"),
@@ -169,7 +169,7 @@ server.tool("gsc_quick_wins", "Find keywords from GSC bulk export data at positi
     }
 });
 // 8. GSC CTR Opportunities
-server.tool("gsc_ctr_opportunities", "Find pages with high impressions but CTR significantly below the expected benchmark for their ranking position. These are title and meta description optimisation candidates." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_ctr_opportunities", "Find pages with high impressions but CTR significantly below the expected benchmark for their ranking position. These are title and meta description optimisation candidates." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     min_impressions: zod_1.z.number().default(500).describe("Minimum impressions threshold"),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
@@ -186,7 +186,7 @@ server.tool("gsc_ctr_opportunities", "Find pages with high impressions but CTR s
     }
 });
 // 9. GSC Content Gaps
-server.tool("gsc_content_gaps", "Find topics you should create content for. Returns queries where you get impressions but rank beyond position 20, meaning there is search demand but no real content targeting it." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_content_gaps", "Find topics you should create content for. Returns queries where you get impressions but rank beyond position 20, meaning there is search demand but no real content targeting it." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(90).describe("Number of days to analyse (longer periods capture more gaps)"),
     min_impressions: zod_1.z.number().default(50).describe("Minimum impressions threshold"),
     min_position: zod_1.z.number().default(20).describe("Minimum position (queries ranking worse than this)"),
@@ -204,7 +204,7 @@ server.tool("gsc_content_gaps", "Find topics you should create content for. Retu
     }
 });
 // 10. GSC Site Snapshot
-server.tool("gsc_site_snapshot", "Get a quick overview of how the site is performing. Returns total clicks, impressions, CTR, position, unique pages and queries with a comparison to the prior period." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_site_snapshot", "Get a quick overview of how the site is performing. Returns total clicks, impressions, CTR, position, unique pages and queries with a comparison to the prior period." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days per period"),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
 }, async ({ days, dataset }) => {
@@ -220,7 +220,7 @@ server.tool("gsc_site_snapshot", "Get a quick overview of how the site is perfor
     }
 });
 // 11. GSC Content Decay
-server.tool("gsc_content_decay", "Find pages with consistent traffic decline over three consecutive months from GSC bulk export data. One bad month is noise; three is a problem." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_content_decay", "Find pages with consistent traffic decline over three consecutive months from GSC bulk export data. One bad month is noise; three is a problem." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
 }, async ({ dataset }) => {
     try {
@@ -235,7 +235,7 @@ server.tool("gsc_content_decay", "Find pages with consistent traffic decline ove
     }
 });
 // 12. GSC Cannibalisation
-server.tool("gsc_cannibalisation", "Find keywords where multiple pages from your site compete against each other. Shows which pages rank for the same query and their respective positions." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_cannibalisation", "Find keywords where multiple pages from your site compete against each other. Shows which pages rank for the same query and their respective positions." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     min_impressions: zod_1.z.number().default(50).describe("Minimum combined impressions for a query"),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
@@ -252,7 +252,7 @@ server.tool("gsc_cannibalisation", "Find keywords where multiple pages from your
     }
 });
 // 13. GSC Traffic Drops
-server.tool("gsc_traffic_drops", "Find pages that lost the most traffic recently. Compares current period vs prior period and diagnoses whether each drop is a ranking loss, CTR collapse, or demand decline." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_traffic_drops", "Find pages that lost the most traffic recently. Compares current period vs prior period and diagnoses whether each drop is a ranking loss, CTR collapse, or demand decline." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days per comparison period"),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
 }, async ({ days, dataset }) => {
@@ -268,7 +268,7 @@ server.tool("gsc_traffic_drops", "Find pages that lost the most traffic recently
     }
 });
 // 14. GSC Topic Cluster Performance
-server.tool("gsc_topic_cluster", "See how a group of pages performs as a whole. Aggregates clicks, impressions, CTR, and position for all pages matching a URL path pattern, plus top pages and queries." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_topic_cluster", "See how a group of pages performs as a whole. Aggregates clicks, impressions, CTR, and position for all pages matching a URL path pattern, plus top pages and queries." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     url_pattern: zod_1.z.string().describe("URL path pattern to match (e.g. /blog/seo)"),
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
@@ -285,7 +285,7 @@ server.tool("gsc_topic_cluster", "See how a group of pages performs as a whole. 
     }
 });
 // 15. GSC CTR vs Benchmark
-server.tool("gsc_ctr_benchmark", "Compare your actual CTR per page against industry benchmarks by position. Flags pages significantly underperforming for their ranking position with verdicts." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_ctr_benchmark", "Compare your actual CTR per page against industry benchmarks by position. Flags pages significantly underperforming for their ranking position with verdicts." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     min_impressions: zod_1.z.number().default(200).describe("Minimum impressions threshold"),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
@@ -302,7 +302,7 @@ server.tool("gsc_ctr_benchmark", "Compare your actual CTR per page against indus
     }
 });
 // 16. GSC Alerts
-server.tool("gsc_alerts", "Check for SEO alerts: position drops, CTR collapses, click losses, and pages that disappeared from search results. Returns severity-rated alerts so you know what needs attention first." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_alerts", "Check for SEO alerts: position drops, CTR collapses, click losses, and pages that disappeared from search results. Returns severity-rated alerts so you know what needs attention first." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(7).describe("Number of days per period to compare"),
     position_drop_threshold: zod_1.z.number().default(20).describe("Alert if position drops more than this many spots"),
     ctr_drop_pct: zod_1.z.number().default(50).describe("Alert if CTR drops more than this percentage"),
@@ -321,7 +321,7 @@ server.tool("gsc_alerts", "Check for SEO alerts: position drops, CTR collapses, 
     }
 });
 // 17. GSC Content Recommendations
-server.tool("gsc_content_recommendations", "Get actionable content recommendations by cross-referencing quick wins, content gaps, and cannibalisation data. Returns prioritised actions: pages to update, content to create, and pages to consolidate." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_content_recommendations", "Get actionable content recommendations by cross-referencing quick wins, content gaps, and cannibalisation data. Returns prioritised actions: pages to update, content to create, and pages to consolidate." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     max_recommendations: zod_1.z.number().default(10).describe("Maximum number of recommendations"),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
@@ -338,7 +338,7 @@ server.tool("gsc_content_recommendations", "Get actionable content recommendatio
     }
 });
 // 18. GSC Report
-server.tool("gsc_report", "Generate a comprehensive markdown performance report. Covers site snapshot, alerts, quick wins, traffic drops, content decay, and recommendations. Returns the full report as markdown." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_report", "Generate a comprehensive markdown performance report. Covers site snapshot, alerts, quick wins, traffic drops, content decay, and recommendations. Returns the full report as markdown." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     include_sections: zod_1.z.array(zod_1.z.string()).optional().describe("Sections: snapshot, alerts, quick_wins, traffic_drops, content_decay, recommendations"),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
@@ -358,7 +358,7 @@ server.tool("gsc_report", "Generate a comprehensive markdown performance report.
 // These use capabilities only possible with BigQuery bulk export
 // ============================================================
 // 19. GSC Anonymous Traffic
-server.tool("gsc_anonymous_traffic", "Analyse anonymous (hidden) query traffic that the GSC API cannot show. Reveals what percentage of your clicks come from queries Google redacts, and which pages get the most hidden traffic. Only possible with BigQuery bulk export." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_anonymous_traffic", "Analyse anonymous (hidden) query traffic that the GSC API cannot show. Reveals what percentage of your clicks come from queries Google redacts, and which pages get the most hidden traffic. Only possible with BigQuery bulk export." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
 }, async ({ days, dataset }) => {
@@ -374,7 +374,7 @@ server.tool("gsc_anonymous_traffic", "Analyse anonymous (hidden) query traffic t
     }
 });
 // 20. GSC Seasonal Analysis
-server.tool("gsc_seasonal", "Year-over-year seasonal traffic analysis. Shows monthly clicks, impressions, CTR, and position with YoY comparison. Requires 12+ months of BigQuery data. Impossible with the 16-month rolling GSC API." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_seasonal", "Year-over-year seasonal traffic analysis. Shows monthly clicks, impressions, CTR, and position with YoY comparison. Requires 12+ months of BigQuery data. Impossible with the 16-month rolling GSC API." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
 }, async ({ dataset }) => {
     try {
@@ -389,7 +389,7 @@ server.tool("gsc_seasonal", "Year-over-year seasonal traffic analysis. Shows mon
     }
 });
 // 21. GSC Device Split
-server.tool("gsc_device_split", "Find queries where mobile and desktop rank different pages from your site. This device cannibalisation is invisible in the GSC UI and impossible to detect via the API's 3-dimension limit." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_device_split", "Find queries where mobile and desktop rank different pages from your site. This device cannibalisation is invisible in the GSC UI and impossible to detect via the API's 3-dimension limit." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     min_clicks: zod_1.z.number().default(5).describe("Minimum clicks threshold"),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
@@ -406,7 +406,7 @@ server.tool("gsc_device_split", "Find queries where mobile and desktop rank diff
     }
 });
 // 22. GSC Intent Breakdown
-server.tool("gsc_intent_breakdown", "Classify all your ranking queries by search intent (informational, transactional, commercial, navigational) using regex pattern matching at scale. Shows clicks, impressions, and CTR by intent category." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_intent_breakdown", "Classify all your ranking queries by search intent (informational, transactional, commercial, navigational) using regex pattern matching at scale. Shows clicks, impressions, and CTR by intent category." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
 }, async ({ days, dataset }) => {
@@ -422,7 +422,7 @@ server.tool("gsc_intent_breakdown", "Classify all your ranking queries by search
     }
 });
 // 23. GSC N-Grams
-server.tool("gsc_ngrams", "Extract the most common meaningful terms across your entire query set, ranked by clicks. A lightweight alternative to keyword clustering that reveals emerging topics and content themes." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_ngrams", "Extract the most common meaningful terms across your entire query set, ranked by clicks. A lightweight alternative to keyword clustering that reveals emerging topics and content themes." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     min_query_count: zod_1.z.number().default(5).describe("Minimum number of queries a term must appear in"),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
@@ -439,7 +439,7 @@ server.tool("gsc_ngrams", "Extract the most common meaningful terms across your 
     }
 });
 // 24. GSC New Keywords
-server.tool("gsc_new_keywords", "Discover queries that appeared in your recent data but were not present in the baseline period. Useful for spotting new ranking opportunities, trending topics, or the impact of recently published content." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_new_keywords", "Discover queries that appeared in your recent data but were not present in the baseline period. Useful for spotting new ranking opportunities, trending topics, or the impact of recently published content." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     recent_days: zod_1.z.number().default(7).describe("Number of recent days to check"),
     baseline_days: zod_1.z.number().default(60).describe("Number of days for the baseline comparison period"),
     min_impressions: zod_1.z.number().default(10).describe("Minimum impressions in recent period"),
@@ -457,7 +457,7 @@ server.tool("gsc_new_keywords", "Discover queries that appeared in your recent d
     }
 });
 // 25. GSC Forecast
-server.tool("gsc_forecast", "Forecast organic traffic using BigQuery ML ARIMA_PLUS. Trains a time-series model on your historical click data and projects future clicks with confidence intervals. Requires sufficient historical data (ideally 6+ months). This is only possible with BigQuery ML." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_forecast", "Forecast organic traffic using BigQuery ML ARIMA_PLUS. Trains a time-series model on your historical click data and projects future clicks with confidence intervals. Requires sufficient historical data (ideally 6+ months). This is only possible with BigQuery ML." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     horizon: zod_1.z.number().default(30).describe("Number of days to forecast (default 30, max 365)"),
     confidence_level: zod_1.z.number().default(0.95).describe("Confidence level for prediction intervals (0.80 to 0.99)"),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
@@ -474,7 +474,7 @@ server.tool("gsc_forecast", "Forecast organic traffic using BigQuery ML ARIMA_PL
     }
 });
 // 26. GSC Anomalies
-server.tool("gsc_anomalies", "Detect traffic anomalies using BigQuery ML. Unlike threshold-based alerts, this understands seasonality and weekly patterns, so it only flags genuinely unexpected traffic changes. Requires sufficient historical data (ideally 6+ months)." + guardrails_js_1.GUARDRAIL_SUFFIX, {
+server.tool("gsc_anomalies", "Detect traffic anomalies using BigQuery ML. Unlike threshold-based alerts, this understands seasonality and weekly patterns, so it only flags genuinely unexpected traffic changes. Requires sufficient historical data (ideally 6+ months)." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     anomaly_threshold: zod_1.z.number().default(0.95).describe("Anomaly probability threshold (0.80 to 0.99, higher = fewer but more significant anomalies)"),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
 }, async ({ anomaly_threshold, dataset }) => {
