@@ -1,4 +1,4 @@
-import { getBigQueryClient, getConfig, validateIdentifier } from "../client.js";
+import { getBigQueryClient, getConfig, resolveLocation, validateIdentifier } from "../client.js";
 import { formatBytes } from "./query.js";
 
 export async function sampleRows(
@@ -22,7 +22,7 @@ export async function sampleRows(
 
   const [job] = await client.createQueryJob({
     query: sql,
-    location: config.location,
+    location: resolveLocation(targetProject),
     maximumBytesBilled: String(1 * 1024 * 1024 * 1024), // 1GB cap for sample queries
   });
 

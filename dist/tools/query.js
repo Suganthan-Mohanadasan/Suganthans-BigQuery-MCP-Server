@@ -46,7 +46,7 @@ async function runQuery(sql, maxRows = 100, projectId) {
     }
     const [job] = await client.createQueryJob({
         query: finalSQL,
-        location: config.location,
+        location: (0, client_js_1.resolveLocation)(targetProject),
         maximumBytesBilled: String(10 * 1024 * 1024 * 1024), // 10GB safety limit
         defaultDataset: config.defaultDataset
             ? { projectId: targetProject, datasetId: config.defaultDataset }
@@ -79,7 +79,7 @@ async function runMLStatement(sql, maxRows = 1000, projectId) {
     const targetProject = projectId || config.projectId;
     const [job] = await client.createQueryJob({
         query: sql,
-        location: config.location,
+        location: (0, client_js_1.resolveLocation)(targetProject),
         maximumBytesBilled: String(50 * 1024 * 1024 * 1024), // 50GB for ML training
         defaultDataset: config.defaultDataset
             ? { projectId: targetProject, datasetId: config.defaultDataset }
@@ -122,7 +122,7 @@ async function dryRunQuery(sql, projectId) {
     const targetProject = projectId || config.projectId;
     const [job] = await client.createQueryJob({
         query: sql,
-        location: config.location,
+        location: (0, client_js_1.resolveLocation)(targetProject),
         dryRun: true,
         defaultDataset: config.defaultDataset
             ? { projectId: targetProject, datasetId: config.defaultDataset }

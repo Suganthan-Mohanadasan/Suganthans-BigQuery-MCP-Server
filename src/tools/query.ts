@@ -1,4 +1,4 @@
-import { getBigQueryClient, getConfig } from "../client.js";
+import { getBigQueryClient, getConfig, resolveLocation } from "../client.js";
 
 const BLOCKED_PATTERNS = /\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE|MERGE|GRANT|REVOKE|EXPORT|CALL|EXECUTE)\b/i;
 const COMMENT_PATTERNS = /(\/\*[\s\S]*?\*\/|--[^\n]*)/g;
@@ -52,7 +52,7 @@ export async function runQuery(
 
   const [job] = await client.createQueryJob({
     query: finalSQL,
-    location: config.location,
+    location: resolveLocation(targetProject),
     maximumBytesBilled: String(10 * 1024 * 1024 * 1024), // 10GB safety limit
     defaultDataset: config.defaultDataset
       ? { projectId: targetProject, datasetId: config.defaultDataset }
@@ -97,7 +97,7 @@ export async function runMLStatement(
 
   const [job] = await client.createQueryJob({
     query: sql,
-    location: config.location,
+    location: resolveLocation(targetProject),
     maximumBytesBilled: String(50 * 1024 * 1024 * 1024), // 50GB for ML training
     defaultDataset: config.defaultDataset
       ? { projectId: targetProject, datasetId: config.defaultDataset }
@@ -148,7 +148,7 @@ export async function dryRunQuery(
 
   const [job] = await client.createQueryJob({
     query: sql,
-    location: config.location,
+    location: resolveLocation(targetProject),
     dryRun: true,
     defaultDataset: config.defaultDataset
       ? { projectId: targetProject, datasetId: config.defaultDataset }

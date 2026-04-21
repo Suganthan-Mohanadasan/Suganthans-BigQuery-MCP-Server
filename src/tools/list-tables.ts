@@ -1,4 +1,4 @@
-import { getBigQueryClient, getConfig, validateIdentifier } from "../client.js";
+import { getBigQueryClient, getConfig, resolveLocation, validateIdentifier } from "../client.js";
 
 interface TableInfo {
   id: string;
@@ -49,8 +49,9 @@ export async function listTables(
     ORDER BY table_name, ordinal_position
   `;
 
-  const [tableJob] = await client.createQueryJob({ query: tableQuery, location: config.location });
-  const [columnJob] = await client.createQueryJob({ query: columnQuery, location: config.location });
+  const location = resolveLocation(targetProject);
+  const [tableJob] = await client.createQueryJob({ query: tableQuery, location });
+  const [columnJob] = await client.createQueryJob({ query: columnQuery, location });
 
   const [tableRows] = await tableJob.getQueryResults();
   const [columnRows] = await columnJob.getQueryResults();
