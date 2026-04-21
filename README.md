@@ -4,11 +4,13 @@
 
 # BigQuery MCP Server
 
-An MCP server for BigQuery that lets you ask Claude questions about your search data warehouse and get real answers. Not raw query results. Actual analysis with verdicts and recommendations.
+An MCP server for BigQuery that lets you ask Claude questions about your search and analytics data warehouse and get real answers. Not raw query results. Actual analysis with verdicts and recommendations.
 
-26 tools. ML forecasting. Anomaly detection. Anonymous query analysis. Free and open source.
+32 tools. GA4 + GSC revenue attribution. ML forecasting. Anomaly detection. Anonymous query analysis. Free and open source.
 
 > **Full setup guide with screenshots:** [suganthan.com/blog/bigquery-mcp-server/](https://suganthan.com/blog/bigquery-mcp-server/)
+>
+> **New in v4.0 (GA4 integration):** [suganthan.com/blog/google-analytics-bigquery-mcp-server/](https://suganthan.com/blog/google-analytics-bigquery-mcp-server/)
 
 ## See it in action
 
@@ -63,6 +65,17 @@ Check for any SEO alerts in the last 7 days
 Give me content recommendations
 ```
 
+With the GA4 BigQuery export also connected (v4.0+):
+
+```
+Which keywords generate the most revenue?
+Which pages have the biggest gap between rankings and conversions?
+What is each search position worth on my site?
+Which pages have a mismatch between their search snippet and actual content quality?
+Compare branded vs non-branded performance for 'my brand, my-brand'
+Show me page performance combining search and analytics data
+```
+
 ## Quick start
 
 ```bash
@@ -94,8 +107,10 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 Your service account needs three IAM roles: **BigQuery Data Editor**, **BigQuery Data Viewer**, and **BigQuery Job User**.
 
 > **Need help with BigQuery setup, bulk export, service accounts, or permissions?** The [full guide](https://suganthan.com/blog/bigquery-mcp-server/) walks through every step with screenshots.
+>
+> **Want the GA4 + GSC blending tools too?** Add the GA4 BigQuery export and one extra environment variable (`BIGQUERY_GA4_DATASET`). Full walkthrough: [GA4 + GSC in BigQuery setup guide](https://suganthan.com/blog/google-analytics-bigquery-mcp-server/).
 
-## All 26 tools
+## All 32 tools
 
 ### BigQuery exclusive (8)
 
@@ -131,6 +146,19 @@ The same analysis tools from the [GSC MCP server](https://github.com/Suganthan-M
 | `gsc_content_recommendations` | Prioritised actions: pages to update, content to create, pages to consolidate |
 | `gsc_report` | Full markdown performance report |
 
+### GA4 + GSC blending (6, new in v4.0)
+
+Require the GA4 BigQuery export running alongside GSC in the same project. Set `BIGQUERY_GA4_DATASET` (or pass `ga4_dataset` per call). [Full setup guide](https://suganthan.com/blog/google-analytics-bigquery-mcp-server/).
+
+| Tool | What it answers |
+|---|---|
+| `ga4_gsc_query_revenue` | Which search queries actually drive revenue and conversions? Proportional attribution by click share. |
+| `ga4_gsc_content_roi` | Which pages have the biggest gap between rankings and conversions? Diagnoses each page. |
+| `ga4_gsc_position_value` | What is each search position worth on your site? Conversion rate and revenue per click by position bucket. |
+| `ga4_gsc_snippet_mismatch` | Which pages have misleading or underselling snippets? |
+| `ga4_gsc_branded_performance` | How does branded vs non-branded traffic convert? |
+| `ga4_gsc_page_performance` | Full page-level search + analytics metrics joined per landing page. |
+
 ### General purpose (6)
 
 Work with any BigQuery dataset, not just GSC.
@@ -159,7 +187,7 @@ Both complement each other. Use the [GSC MCP server](https://github.com/Sugantha
 
 ## What makes this different
 
-**Analysis, not just queries.** Most BigQuery tools give you raw SQL access. This ships with 20 pre-built SEO analysis tools: opportunity scoring, cannibalisation detection, decay tracking, CTR benchmarking, traffic drop diagnosis, ML forecasting. You ask a question, it runs the analysis and tells you what to do.
+**Analysis, not just queries.** Most BigQuery tools give you raw SQL access. This ships with 26 pre-built SEO analysis tools: opportunity scoring, cannibalisation detection, decay tracking, CTR benchmarking, traffic drop diagnosis, ML forecasting, and GA4 + GSC revenue attribution. You ask a question, it runs the analysis and tells you what to do.
 
 **ML built in.** ARIMA_PLUS traffic forecasting and anomaly detection run directly in BigQuery. No external services, no extra cost beyond standard BigQuery pricing.
 
@@ -177,6 +205,7 @@ Both complement each other. Use the [GSC MCP server](https://github.com/Sugantha
 | `BIGQUERY_KEY_FILE` | No | Path to service account JSON key (falls back to `GOOGLE_APPLICATION_CREDENTIALS`) |
 | `BIGQUERY_DEFAULT_DATASET` | No | Default dataset for queries (e.g. `searchconsole`) |
 | `BIGQUERY_LOCATION` | No | Dataset location (default: `US`). Set to `EU`, `asia-southeast1`, etc. if needed. |
+| `BIGQUERY_GA4_DATASET` | No | GA4 export dataset name (e.g. `analytics_123456789`). Only needed for the 6 `ga4_gsc_*` blending tools. |
 
 ## Full guide
 
@@ -185,6 +214,8 @@ Step by step setup with screenshots, cost breakdowns, and honest comparison with
 **[suganthan.com/blog/bigquery-mcp-server/](https://suganthan.com/blog/bigquery-mcp-server/)**
 
 ## Changelog
+
+**v4.0.0** GA4 integration. 6 new tools that blend GA4 conversion and revenue data with GSC search data: `ga4_gsc_query_revenue`, `ga4_gsc_content_roi`, `ga4_gsc_position_value`, `ga4_gsc_snippet_mismatch`, `ga4_gsc_branded_performance`, and `ga4_gsc_page_performance`. Requires the GA4 BigQuery export running alongside GSC and one extra environment variable (`BIGQUERY_GA4_DATASET`). Total tools now 32. Full setup guide: [GA4 + GSC in BigQuery](https://suganthan.com/blog/google-analytics-bigquery-mcp-server/).
 
 **v3.1.0** Visual dashboard rendering. All GSC analysis tools now produce rich, interactive visualisations in Claude Desktop with summary cards, colour coded indicators, bar charts, and tabbed sections instead of plain text output. No reinstall needed, just restart Claude Desktop.
 
