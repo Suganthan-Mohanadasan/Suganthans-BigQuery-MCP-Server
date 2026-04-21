@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ga4GscQueryRevenue = ga4GscQueryRevenue;
 const query_js_1 = require("./query.js");
 const client_js_1 = require("../client.js");
-const url_normalise_js_1 = require("./url-normalise.js");
+const ga4_shared_js_1 = require("./ga4-shared.js");
 async function ga4GscQueryRevenue(days = 28, minClicks = 5, maxRows = 50, gscDataset, ga4Dataset, projectId) {
     const config = (0, client_js_1.getConfig)();
     const gscDs = gscDataset || config.defaultDataset || "searchconsole";
@@ -16,13 +16,13 @@ async function ga4GscQueryRevenue(days = 28, minClicks = 5, maxRows = 50, gscDat
     (0, client_js_1.validateIdentifier)(ga4Ds, "ga4_dataset");
     if (projectId)
         (0, client_js_1.validateIdentifier)(projectId, "project_id");
-    const normGa4 = (0, url_normalise_js_1.normaliseURL)(`(SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'page_location')`);
-    const normGsc = (0, url_normalise_js_1.normaliseURL)(`url`);
     const sql = `
-    WITH gsc_queries AS (
+    WITH ${(0, ga4_shared_js_1.ga4OrganicSessionsCTEs)(targetProject, ga4Ds, days)},
+
+    gsc_queries AS (
       SELECT
         query,
-        ${normGsc} AS landing_page,
+        ${(0, ga4_shared_js_1.normaliseGSCUrl)("url")} AS landing_page,
         SUM(clicks) AS query_clicks,
         SUM(impressions) AS impressions,
         SUM(sum_position) / SUM(impressions) + 1 AS avg_position
@@ -39,23 +39,6 @@ async function ga4GscQueryRevenue(days = 28, minClicks = 5, maxRows = 50, gscDat
         SUM(query_clicks) OVER (PARTITION BY landing_page) AS total_page_clicks,
         SAFE_DIVIDE(query_clicks, SUM(query_clicks) OVER (PARTITION BY landing_page)) AS click_share
       FROM gsc_queries
-    ),
-
-    ga4_page_revenue AS (
-      SELECT
-        ${normGa4} AS landing_page,
-        COUNT(DISTINCT CONCAT(
-          user_pseudo_id,
-          CAST((SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'ga_session_id') AS STRING)
-        )) AS sessions,
-        COUNTIF(event_name IN ('purchase', 'generate_lead', 'sign_up', 'begin_checkout', 'Lead_signup')) AS key_events,
-        SUM(ecommerce.purchase_revenue_in_usd) AS revenue
-      FROM \`${targetProject}.${ga4Ds}.events_*\`
-      WHERE session_traffic_source_last_click.cross_channel_campaign.default_channel_group = 'Organic Search'
-        AND collected_traffic_source.gclid IS NULL
-        AND _TABLE_SUFFIX BETWEEN FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY))
-                               AND FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
-      GROUP BY landing_page
     )
 
     SELECT
@@ -69,7 +52,7 @@ async function ga4GscQueryRevenue(days = 28, minClicks = 5, maxRows = 50, gscDat
       CAST(ROUND(COALESCE(ga4.key_events, 0) * gsc.click_share) AS INT64) AS attributed_conversions,
       ROUND(COALESCE(ga4.revenue, 0) * gsc.click_share, 2) AS attributed_revenue
     FROM gsc_with_share gsc
-    LEFT JOIN ga4_page_revenue ga4 ON gsc.landing_page = ga4.landing_page
+    LEFT JOIN ga4_organic ga4 ON gsc.landing_page = ga4.landing_page
     WHERE gsc.query_clicks >= ${minClicks}
     ORDER BY attributed_revenue DESC, attributed_conversions DESC
     LIMIT ${maxRows}

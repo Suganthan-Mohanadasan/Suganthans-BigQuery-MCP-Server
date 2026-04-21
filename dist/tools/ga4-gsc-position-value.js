@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ga4GscPositionValue = ga4GscPositionValue;
 const query_js_1 = require("./query.js");
 const client_js_1 = require("../client.js");
-const url_normalise_js_1 = require("./url-normalise.js");
+const ga4_shared_js_1 = require("./ga4-shared.js");
 async function ga4GscPositionValue(days = 90, maxRows = 20, gscDataset, ga4Dataset, projectId) {
     const config = (0, client_js_1.getConfig)();
     const gscDs = gscDataset || config.defaultDataset || "searchconsole";
@@ -16,12 +16,12 @@ async function ga4GscPositionValue(days = 90, maxRows = 20, gscDataset, ga4Datas
     (0, client_js_1.validateIdentifier)(ga4Ds, "ga4_dataset");
     if (projectId)
         (0, client_js_1.validateIdentifier)(projectId, "project_id");
-    const normGa4 = (0, url_normalise_js_1.normaliseURL)(`(SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'page_location')`);
-    const normGsc = (0, url_normalise_js_1.normaliseURL)(`url`);
     const sql = `
-    WITH page_positions AS (
+    WITH ${(0, ga4_shared_js_1.ga4OrganicSessionsCTEs)(targetProject, ga4Ds, days)},
+
+    page_positions AS (
       SELECT
-        ${normGsc} AS landing_page,
+        ${(0, ga4_shared_js_1.normaliseGSCUrl)("url")} AS landing_page,
         SUM(sum_position) / SUM(impressions) + 1 AS avg_position,
         SUM(clicks) AS clicks,
         SUM(impressions) AS impressions,
@@ -37,23 +37,6 @@ async function ga4GscPositionValue(days = 90, maxRows = 20, gscDataset, ga4Datas
       WHERE data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
         AND search_type = 'WEB'
       GROUP BY landing_page
-    ),
-
-    ga4_page_value AS (
-      SELECT
-        ${normGa4} AS landing_page,
-        COUNT(DISTINCT CONCAT(
-          user_pseudo_id,
-          CAST((SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'ga_session_id') AS STRING)
-        )) AS sessions,
-        COUNTIF(event_name IN ('purchase', 'generate_lead', 'sign_up', 'begin_checkout', 'Lead_signup')) AS key_events,
-        SUM(ecommerce.purchase_revenue_in_usd) AS revenue
-      FROM \`${targetProject}.${ga4Ds}.events_*\`
-      WHERE session_traffic_source_last_click.cross_channel_campaign.default_channel_group = 'Organic Search'
-        AND collected_traffic_source.gclid IS NULL
-        AND _TABLE_SUFFIX BETWEEN FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY))
-                               AND FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
-      GROUP BY landing_page
     )
 
     SELECT
@@ -67,7 +50,7 @@ async function ga4GscPositionValue(days = 90, maxRows = 20, gscDataset, ga4Datas
       ROUND(SUM(COALESCE(ga4.revenue, 0)), 2) AS total_revenue,
       ROUND(SAFE_DIVIDE(SUM(COALESCE(ga4.revenue, 0)), SUM(pp.clicks)), 2) AS revenue_per_click
     FROM page_positions pp
-    LEFT JOIN ga4_page_value ga4 ON pp.landing_page = ga4.landing_page
+    LEFT JOIN ga4_organic ga4 ON pp.landing_page = ga4.landing_page
     GROUP BY pp.position_bucket
     ORDER BY
       CASE pp.position_bucket

@@ -1,6 +1,6 @@
 import { runQuery } from "./query.js";
 import { getConfig, validateIdentifier } from "../client.js";
-import { normaliseURL } from "./url-normalise.js";
+import { ga4OrganicSessionsCTEs, normaliseGSCUrl } from "./ga4-shared.js";
 
 export async function ga4GscSnippetMismatch(
   days: number = 28,
@@ -23,33 +23,12 @@ export async function ga4GscSnippetMismatch(
   validateIdentifier(ga4Ds, "ga4_dataset");
   if (projectId) validateIdentifier(projectId, "project_id");
 
-  const normGa4 = normaliseURL(`(SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'page_location')`);
-  const normGsc = normaliseURL(`url`);
-
   const sql = `
-    WITH ga4_organic AS (
-      SELECT
-        ${normGa4} AS landing_page,
-        COUNT(DISTINCT CONCAT(
-          user_pseudo_id,
-          CAST((SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'ga_session_id') AS STRING)
-        )) AS sessions,
-        COUNTIF(
-          (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'session_engaged') = '1'
-        ) AS engaged_sessions,
-        COUNTIF(event_name IN ('purchase', 'generate_lead', 'sign_up', 'begin_checkout', 'Lead_signup')) AS key_events
-      FROM \`${targetProject}.${ga4Ds}.events_*\`
-      WHERE event_name = 'session_start'
-        AND session_traffic_source_last_click.cross_channel_campaign.default_channel_group = 'Organic Search'
-        AND collected_traffic_source.gclid IS NULL
-        AND _TABLE_SUFFIX BETWEEN FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY))
-                               AND FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
-      GROUP BY landing_page
-    ),
+    WITH ${ga4OrganicSessionsCTEs(targetProject, ga4Ds, days)},
 
     gsc AS (
       SELECT
-        ${normGsc} AS landing_page,
+        ${normaliseGSCUrl("url")} AS landing_page,
         SUM(clicks) AS gsc_clicks,
         SUM(impressions) AS gsc_impressions,
         SAFE_DIVIDE(SUM(clicks), SUM(impressions)) AS gsc_ctr,

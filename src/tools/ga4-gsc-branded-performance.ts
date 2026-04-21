@@ -1,6 +1,6 @@
 import { runQuery } from "./query.js";
 import { getConfig, validateIdentifier } from "../client.js";
-import { normaliseURL } from "./url-normalise.js";
+import { ga4OrganicSessionsCTEs, normaliseGSCUrl } from "./ga4-shared.js";
 
 export async function ga4GscBrandedPerformance(
   brandTerms: string,
@@ -22,23 +22,23 @@ export async function ga4GscBrandedPerformance(
   validateIdentifier(ga4Ds, "ga4_dataset");
   if (projectId) validateIdentifier(projectId, "project_id");
 
-  // Build regex from comma-separated brand terms
+  // Build regex from comma-separated brand terms (escape special chars)
   const terms = brandTerms
     .split(",")
     .map((t) => t.trim().toLowerCase())
-    .filter((t) => t.length > 0);
+    .filter((t) => t.length > 0)
+    .map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
   if (terms.length === 0) {
     throw new Error("brand_terms is required. Provide comma-separated brand terms, e.g. 'suganthan,snippet digital'");
   }
   const brandRegex = terms.join("|");
 
-  const normGa4 = normaliseURL(`(SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'page_location')`);
-  const normGsc = normaliseURL(`url`);
-
   const sql = `
-    WITH gsc_branded AS (
+    WITH ${ga4OrganicSessionsCTEs(targetProject, ga4Ds, days)},
+
+    gsc_branded AS (
       SELECT
-        ${normGsc} AS landing_page,
+        ${normaliseGSCUrl("url")} AS landing_page,
         CASE
           WHEN REGEXP_CONTAINS(LOWER(query), r'${brandRegex}') THEN 'Branded'
           ELSE 'Non-branded'
@@ -52,27 +52,6 @@ export async function ga4GscBrandedPerformance(
         AND search_type = 'WEB'
         AND NOT is_anonymized_query
       GROUP BY landing_page, traffic_type
-    ),
-
-    ga4_organic AS (
-      SELECT
-        ${normGa4} AS landing_page,
-        COUNT(DISTINCT CONCAT(
-          user_pseudo_id,
-          CAST((SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'ga_session_id') AS STRING)
-        )) AS sessions,
-        COUNTIF(
-          (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'session_engaged') = '1'
-        ) AS engaged_sessions,
-        COUNTIF(event_name IN ('purchase', 'generate_lead', 'sign_up', 'begin_checkout', 'Lead_signup')) AS key_events,
-        SUM(ecommerce.purchase_revenue_in_usd) AS revenue
-      FROM \`${targetProject}.${ga4Ds}.events_*\`
-      WHERE event_name = 'session_start'
-        AND session_traffic_source_last_click.cross_channel_campaign.default_channel_group = 'Organic Search'
-        AND collected_traffic_source.gclid IS NULL
-        AND _TABLE_SUFFIX BETWEEN FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY))
-                               AND FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
-      GROUP BY landing_page
     )
 
     SELECT
