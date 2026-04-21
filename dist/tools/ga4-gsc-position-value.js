@@ -4,33 +4,36 @@ exports.ga4GscPositionValue = ga4GscPositionValue;
 const query_js_1 = require("./query.js");
 const client_js_1 = require("../client.js");
 const url_normalise_js_1 = require("./url-normalise.js");
-async function ga4GscPositionValue(days = 90, maxRows = 20, gscDataset, ga4Dataset) {
+async function ga4GscPositionValue(days = 90, maxRows = 20, gscDataset, ga4Dataset, projectId) {
     const config = (0, client_js_1.getConfig)();
     const gscDs = gscDataset || config.defaultDataset || "searchconsole";
     const ga4Ds = ga4Dataset || process.env.BIGQUERY_GA4_DATASET;
+    const targetProject = projectId || config.ga4ProjectId || config.projectId;
     (0, client_js_1.validateIdentifier)(gscDs, "gsc_dataset");
     if (!ga4Ds) {
         throw new Error("GA4 dataset not configured. Set BIGQUERY_GA4_DATASET environment variable or pass ga4_dataset parameter.");
     }
     (0, client_js_1.validateIdentifier)(ga4Ds, "ga4_dataset");
+    if (projectId)
+        (0, client_js_1.validateIdentifier)(projectId, "project_id");
     const normGa4 = (0, url_normalise_js_1.normaliseURL)(`(SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'page_location')`);
     const normGsc = (0, url_normalise_js_1.normaliseURL)(`url`);
     const sql = `
     WITH page_positions AS (
       SELECT
         ${normGsc} AS landing_page,
-        SUM(sum_top_position) / SUM(impressions) + 1 AS avg_position,
+        SUM(sum_position) / SUM(impressions) + 1 AS avg_position,
         SUM(clicks) AS clicks,
         SUM(impressions) AS impressions,
         CASE
-          WHEN SUM(sum_top_position) / SUM(impressions) + 1 <= 1.5 THEN 'Position 1'
-          WHEN SUM(sum_top_position) / SUM(impressions) + 1 <= 3.5 THEN 'Position 2-3'
-          WHEN SUM(sum_top_position) / SUM(impressions) + 1 <= 5.5 THEN 'Position 4-5'
-          WHEN SUM(sum_top_position) / SUM(impressions) + 1 <= 10.5 THEN 'Position 6-10'
-          WHEN SUM(sum_top_position) / SUM(impressions) + 1 <= 20.5 THEN 'Position 11-20'
+          WHEN SUM(sum_position) / SUM(impressions) + 1 <= 1.5 THEN 'Position 1'
+          WHEN SUM(sum_position) / SUM(impressions) + 1 <= 3.5 THEN 'Position 2-3'
+          WHEN SUM(sum_position) / SUM(impressions) + 1 <= 5.5 THEN 'Position 4-5'
+          WHEN SUM(sum_position) / SUM(impressions) + 1 <= 10.5 THEN 'Position 6-10'
+          WHEN SUM(sum_position) / SUM(impressions) + 1 <= 20.5 THEN 'Position 11-20'
           ELSE 'Position 20+'
         END AS position_bucket
-      FROM \`${gscDs}.searchdata_url_impression\`
+      FROM \`${targetProject}.${gscDs}.searchdata_url_impression\`
       WHERE data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
         AND search_type = 'WEB'
       GROUP BY landing_page
@@ -43,11 +46,11 @@ async function ga4GscPositionValue(days = 90, maxRows = 20, gscDataset, ga4Datas
           user_pseudo_id,
           CAST((SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'ga_session_id') AS STRING)
         )) AS sessions,
-        COUNTIF(event_name IN ('purchase', 'generate_lead', 'sign_up', 'begin_checkout')) AS key_events,
+        COUNTIF(event_name IN ('purchase', 'generate_lead', 'sign_up', 'begin_checkout', 'Lead_signup')) AS key_events,
         SUM(ecommerce.purchase_revenue_in_usd) AS revenue
-      FROM \`${ga4Ds}.events_*\`
-      WHERE session_traffic_source_last_click.manual_campaign.source = 'google'
-        AND session_traffic_source_last_click.manual_campaign.medium = 'organic'
+      FROM \`${targetProject}.${ga4Ds}.events_*\`
+      WHERE session_traffic_source_last_click.cross_channel_campaign.default_channel_group = 'Organic Search'
+        AND collected_traffic_source.gclid IS NULL
         AND _TABLE_SUFFIX BETWEEN FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY))
                                AND FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
       GROUP BY landing_page
@@ -77,5 +80,5 @@ async function ga4GscPositionValue(days = 90, maxRows = 20, gscDataset, ga4Datas
       END
     LIMIT ${maxRows}
   `;
-    return (0, query_js_1.runQuery)(sql, maxRows);
+    return (0, query_js_1.runQuery)(sql, maxRows, targetProject);
 }

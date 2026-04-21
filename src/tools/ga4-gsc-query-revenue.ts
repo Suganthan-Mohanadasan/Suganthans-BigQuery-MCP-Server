@@ -7,11 +7,13 @@ export async function ga4GscQueryRevenue(
   minClicks: number = 5,
   maxRows: number = 50,
   gscDataset?: string,
-  ga4Dataset?: string
+  ga4Dataset?: string,
+  projectId?: string
 ): Promise<{ rows: Record<string, unknown>[]; totalRows: number; bytesProcessed: string }> {
   const config = getConfig();
   const gscDs = gscDataset || config.defaultDataset || "searchconsole";
   const ga4Ds = ga4Dataset || process.env.BIGQUERY_GA4_DATASET;
+  const targetProject = projectId || config.ga4ProjectId || config.projectId;
   validateIdentifier(gscDs, "gsc_dataset");
   if (!ga4Ds) {
     throw new Error(
@@ -19,6 +21,7 @@ export async function ga4GscQueryRevenue(
     );
   }
   validateIdentifier(ga4Ds, "ga4_dataset");
+  if (projectId) validateIdentifier(projectId, "project_id");
 
   const normGa4 = normaliseURL(`(SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'page_location')`);
   const normGsc = normaliseURL(`url`);
@@ -30,8 +33,8 @@ export async function ga4GscQueryRevenue(
         ${normGsc} AS landing_page,
         SUM(clicks) AS query_clicks,
         SUM(impressions) AS impressions,
-        SUM(sum_top_position) / SUM(impressions) + 1 AS avg_position
-      FROM \`${gscDs}.searchdata_url_impression\`
+        SUM(sum_position) / SUM(impressions) + 1 AS avg_position
+      FROM \`${targetProject}.${gscDs}.searchdata_url_impression\`
       WHERE data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
         AND search_type = 'WEB'
         AND NOT is_anonymized_query
@@ -53,11 +56,11 @@ export async function ga4GscQueryRevenue(
           user_pseudo_id,
           CAST((SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'ga_session_id') AS STRING)
         )) AS sessions,
-        COUNTIF(event_name IN ('purchase', 'generate_lead', 'sign_up', 'begin_checkout')) AS key_events,
+        COUNTIF(event_name IN ('purchase', 'generate_lead', 'sign_up', 'begin_checkout', 'Lead_signup')) AS key_events,
         SUM(ecommerce.purchase_revenue_in_usd) AS revenue
-      FROM \`${ga4Ds}.events_*\`
-      WHERE session_traffic_source_last_click.manual_campaign.source = 'google'
-        AND session_traffic_source_last_click.manual_campaign.medium = 'organic'
+      FROM \`${targetProject}.${ga4Ds}.events_*\`
+      WHERE session_traffic_source_last_click.cross_channel_campaign.default_channel_group = 'Organic Search'
+        AND collected_traffic_source.gclid IS NULL
         AND _TABLE_SUFFIX BETWEEN FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY))
                                AND FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
       GROUP BY landing_page
@@ -80,5 +83,5 @@ export async function ga4GscQueryRevenue(
     LIMIT ${maxRows}
   `;
 
-  return runQuery(sql, maxRows);
+  return runQuery(sql, maxRows, targetProject);
 }

@@ -7,11 +7,13 @@ export async function ga4GscSnippetMismatch(
   minClicks: number = 20,
   maxRows: number = 50,
   gscDataset?: string,
-  ga4Dataset?: string
+  ga4Dataset?: string,
+  projectId?: string
 ): Promise<{ rows: Record<string, unknown>[]; totalRows: number; bytesProcessed: string }> {
   const config = getConfig();
   const gscDs = gscDataset || config.defaultDataset || "searchconsole";
   const ga4Ds = ga4Dataset || process.env.BIGQUERY_GA4_DATASET;
+  const targetProject = projectId || config.ga4ProjectId || config.projectId;
   validateIdentifier(gscDs, "gsc_dataset");
   if (!ga4Ds) {
     throw new Error(
@@ -19,6 +21,7 @@ export async function ga4GscSnippetMismatch(
     );
   }
   validateIdentifier(ga4Ds, "ga4_dataset");
+  if (projectId) validateIdentifier(projectId, "project_id");
 
   const normGa4 = normaliseURL(`(SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'page_location')`);
   const normGsc = normaliseURL(`url`);
@@ -34,11 +37,11 @@ export async function ga4GscSnippetMismatch(
         COUNTIF(
           (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'session_engaged') = '1'
         ) AS engaged_sessions,
-        COUNTIF(event_name IN ('purchase', 'generate_lead', 'sign_up', 'begin_checkout')) AS key_events
-      FROM \`${ga4Ds}.events_*\`
+        COUNTIF(event_name IN ('purchase', 'generate_lead', 'sign_up', 'begin_checkout', 'Lead_signup')) AS key_events
+      FROM \`${targetProject}.${ga4Ds}.events_*\`
       WHERE event_name = 'session_start'
-        AND session_traffic_source_last_click.manual_campaign.source = 'google'
-        AND session_traffic_source_last_click.manual_campaign.medium = 'organic'
+        AND session_traffic_source_last_click.cross_channel_campaign.default_channel_group = 'Organic Search'
+        AND collected_traffic_source.gclid IS NULL
         AND _TABLE_SUFFIX BETWEEN FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY))
                                AND FORMAT_DATE('%Y%m%d', DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
       GROUP BY landing_page
@@ -50,8 +53,8 @@ export async function ga4GscSnippetMismatch(
         SUM(clicks) AS gsc_clicks,
         SUM(impressions) AS gsc_impressions,
         SAFE_DIVIDE(SUM(clicks), SUM(impressions)) AS gsc_ctr,
-        SUM(sum_top_position) / SUM(impressions) + 1 AS avg_position
-      FROM \`${gscDs}.searchdata_url_impression\`
+        SUM(sum_position) / SUM(impressions) + 1 AS avg_position
+      FROM \`${targetProject}.${gscDs}.searchdata_url_impression\`
       WHERE data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
         AND search_type = 'WEB'
       GROUP BY landing_page
@@ -92,5 +95,5 @@ export async function ga4GscSnippetMismatch(
     LIMIT ${maxRows}
   `;
 
-  return runQuery(sql, maxRows);
+  return runQuery(sql, maxRows, targetProject);
 }
