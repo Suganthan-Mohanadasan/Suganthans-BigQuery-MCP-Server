@@ -215,6 +215,8 @@ Step by step setup with screenshots, cost breakdowns, and honest comparison with
 
 ## Changelog
 
+**v4.1.0** Generative AI conversation queries, the BigQuery twin. `gsc_genai_conversation_queries` finds the AI conversation fragments hiding in your query data and sorts them into seven kinds: reply artefacts, pivot follow-ups, conversational questions, tracker probes, agent harnesses, pasted strings, and a review pile. Same classifier as the [GSC MCP](https://github.com/Suganthan-Mohanadasan/Suganthans-GSC-MCP) version, run over the bulk export instead of the API, so there are no serving limits on large sites, windows anchor to the export's real freshness, and it reports the anonymised split: how many of your impressions carry no query string at all, which is where most of the conversation pool hides (57.7% on the reference property). Total tools now 33. Full method and findings: [the launch post](https://suganthan.com/blog/ai-mode-queries-search-console/).
+
 **v4.0.0** GA4 integration. 6 new tools that blend GA4 conversion and revenue data with GSC search data: `ga4_gsc_query_revenue`, `ga4_gsc_content_roi`, `ga4_gsc_position_value`, `ga4_gsc_snippet_mismatch`, `ga4_gsc_branded_performance`, and `ga4_gsc_page_performance`. Requires the GA4 BigQuery export running alongside GSC and one extra environment variable (`BIGQUERY_GA4_DATASET`). Total tools now 32. Full setup guide: [GA4 + GSC in BigQuery](https://suganthan.com/blog/google-analytics-bigquery-mcp-server/).
 
 ![Keyword revenue attribution demo: queries joined to GA4 conversion and revenue data via proportional click share](screenshots/ga4-keyword-revenue.jpg)
