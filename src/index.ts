@@ -36,10 +36,12 @@ import { ga4GscContentRoi } from "./tools/ga4-gsc-content-roi.js";
 import { ga4GscSnippetMismatch } from "./tools/ga4-gsc-snippet-mismatch.js";
 import { ga4GscPositionValue } from "./tools/ga4-gsc-position-value.js";
 import { ga4GscBrandedPerformance } from "./tools/ga4-gsc-branded-performance.js";
+// v4.1 generative AI tools — AI Mode conversation exhaust in the query table.
+import { gscGenaiConversationQueries } from "./tools/gsc-genai-conversation-queries.js";
 
 const server = new McpServer({
   name: "bigquery-mcp",
-  version: "3.1.0",
+  version: "4.1.0",
 });
 
 function errorResponse(error: unknown) {
@@ -780,10 +782,34 @@ server.tool(
   }
 );
 
+// Generative AI: conversation exhaust detector (BigQuery twin of the GSC MCP tool)
+server.tool(
+  "gsc_genai_conversation_queries",
+  "Surface AI-conversation exhaust hiding in your GSC query data: bare replies to Google's AI ('yes', 'go on'), 'what about X' pivot follow-ups, conversational questions, AI-visibility tracker probes, and full agent prompts logged as queries. Google counts every AI Mode follow-up as a new query, so these fragments carry real impressions, positions and clicks. Runs on the bulk export, so no API serving limits, plus the anonymised split: how many impressions carry no query string at all, which is where most of the conversation iceberg sits. Seven classified buckets with landing pages and a monthly artefact timeline. Treat probe and harness buckets as machine traffic, not demand." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX,
+  {
+    days: z.number().default(365).describe("Days to analyse, anchored to the export's latest data date (clamped to available retention)"),
+    min_impressions: z.number().default(1).describe("Minimum impressions for a query to be listed (single-impression rows are evidence, not noise)"),
+    max_rows_per_bucket: z.number().default(50).describe("Maximum rows returned per bucket; totals always cover everything"),
+    include_timeline: z.boolean().default(true).describe("Include the monthly artefact timeline over full retention (one extra query)"),
+    dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
+  },
+  async ({ days, min_impressions, max_rows_per_bucket, include_timeline, dataset }) => {
+    try {
+      const results = await gscGenaiConversationQueries(days, min_impressions, max_rows_per_bucket, include_timeline, dataset);
+      const wrapped = withMeta(results, "gsc_genai_conversation_queries", { days, min_impressions, max_rows_per_bucket, include_timeline, dataset });
+      return {
+        content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+      };
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+);
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("BigQuery MCP server v3.1.0 running on stdio (32 tools)");
+  console.error("BigQuery MCP server v4.1.0 running on stdio (33 tools)");
 }
 
 main().catch((error) => {

@@ -36,9 +36,11 @@ const ga4_gsc_content_roi_js_1 = require("./tools/ga4-gsc-content-roi.js");
 const ga4_gsc_snippet_mismatch_js_1 = require("./tools/ga4-gsc-snippet-mismatch.js");
 const ga4_gsc_position_value_js_1 = require("./tools/ga4-gsc-position-value.js");
 const ga4_gsc_branded_performance_js_1 = require("./tools/ga4-gsc-branded-performance.js");
+// v4.1 generative AI tools — AI Mode conversation exhaust in the query table.
+const gsc_genai_conversation_queries_js_1 = require("./tools/gsc-genai-conversation-queries.js");
 const server = new mcp_js_1.McpServer({
     name: "bigquery-mcp",
-    version: "3.1.0",
+    version: "4.1.0",
 });
 function errorResponse(error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -612,10 +614,29 @@ server.tool("ga4_gsc_branded_performance", "Compare branded vs non-branded organ
         return errorResponse(error);
     }
 });
+// Generative AI: conversation exhaust detector (BigQuery twin of the GSC MCP tool)
+server.tool("gsc_genai_conversation_queries", "Surface AI-conversation exhaust hiding in your GSC query data: bare replies to Google's AI ('yes', 'go on'), 'what about X' pivot follow-ups, conversational questions, AI-visibility tracker probes, and full agent prompts logged as queries. Google counts every AI Mode follow-up as a new query, so these fragments carry real impressions, positions and clicks. Runs on the bulk export, so no API serving limits, plus the anonymised split: how many impressions carry no query string at all, which is where most of the conversation iceberg sits. Seven classified buckets with landing pages and a monthly artefact timeline. Treat probe and harness buckets as machine traffic, not demand." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
+    days: zod_1.z.number().default(365).describe("Days to analyse, anchored to the export's latest data date (clamped to available retention)"),
+    min_impressions: zod_1.z.number().default(1).describe("Minimum impressions for a query to be listed (single-impression rows are evidence, not noise)"),
+    max_rows_per_bucket: zod_1.z.number().default(50).describe("Maximum rows returned per bucket; totals always cover everything"),
+    include_timeline: zod_1.z.boolean().default(true).describe("Include the monthly artefact timeline over full retention (one extra query)"),
+    dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
+}, async ({ days, min_impressions, max_rows_per_bucket, include_timeline, dataset }) => {
+    try {
+        const results = await (0, gsc_genai_conversation_queries_js_1.gscGenaiConversationQueries)(days, min_impressions, max_rows_per_bucket, include_timeline, dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_genai_conversation_queries", { days, min_impressions, max_rows_per_bucket, include_timeline, dataset });
+        return {
+            content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
+        };
+    }
+    catch (error) {
+        return errorResponse(error);
+    }
+});
 async function main() {
     const transport = new stdio_js_1.StdioServerTransport();
     await server.connect(transport);
-    console.error("BigQuery MCP server v3.1.0 running on stdio (32 tools)");
+    console.error("BigQuery MCP server v4.1.0 running on stdio (33 tools)");
 }
 main().catch((error) => {
     console.error("Fatal error:", error);

@@ -6,7 +6,7 @@
 
 An MCP server for BigQuery that lets you ask Claude questions about your search and analytics data warehouse and get real answers. Not raw query results. Actual analysis with verdicts and recommendations.
 
-32 tools. GA4 + GSC revenue attribution. ML forecasting. Anomaly detection. Anonymous query analysis. Free and open source.
+33 tools. GA4 + GSC revenue attribution. Generative AI conversation-query detection. ML forecasting. Anomaly detection. Anonymous query analysis. Free and open source.
 
 > **Full setup guide with screenshots:** [suganthan.com/blog/bigquery-mcp-server/](https://suganthan.com/blog/bigquery-mcp-server/)
 >
@@ -110,7 +110,7 @@ Your service account needs three IAM roles: **BigQuery Data Editor**, **BigQuery
 >
 > **Want the GA4 + GSC blending tools too?** Add the GA4 BigQuery export and one extra environment variable (`BIGQUERY_GA4_DATASET`). Full walkthrough: [GA4 + GSC in BigQuery setup guide](https://suganthan.com/blog/google-analytics-bigquery-mcp-server/).
 
-## All 32 tools
+## All 33 tools
 
 ### BigQuery exclusive (8)
 
