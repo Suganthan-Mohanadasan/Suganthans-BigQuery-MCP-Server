@@ -10,6 +10,8 @@ An MCP server for BigQuery that lets you ask Claude questions about your search 
 
 > **Full setup guide with screenshots:** [suganthan.com/blog/bigquery-mcp-server/](https://suganthan.com/blog/bigquery-mcp-server/)
 >
+> **New in v4.1 (AI conversation queries):** [suganthan.com/blog/ai-mode-queries-search-console/](https://suganthan.com/blog/ai-mode-queries-search-console/)
+>
 > **New in v4.0 (GA4 integration):** [suganthan.com/blog/google-analytics-bigquery-mcp-server/](https://suganthan.com/blog/google-analytics-bigquery-mcp-server/)
 
 ## See it in action
@@ -54,6 +56,7 @@ Which pages are losing traffic and why?
 Forecast my traffic for the next 90 days
 Are there any traffic anomalies I should investigate?
 How much of my traffic comes from anonymous queries?
+Find the AI conversation fragments hiding in my queries
 Show me year over year seasonal trends
 What new keywords appeared this week?
 Break down my queries by search intent
@@ -112,13 +115,14 @@ Your service account needs three IAM roles: **BigQuery Data Editor**, **BigQuery
 
 ## All 33 tools
 
-### BigQuery exclusive (8)
+### BigQuery exclusive (9)
 
 These use BigQuery capabilities the Search Console API simply doesn't have.
 
 | Tool | What it answers |
 |---|---|
 | `gsc_anonymous_traffic` | How much traffic is hidden behind anonymous queries? The API hides ~46% of clicks entirely. |
+| `gsc_genai_conversation_queries` | Which queries are AI conversation fragments? Seven kinds sorted, no API row limits, plus the anonymised split the API can't see. |
 | `gsc_forecast` | ARIMA_PLUS traffic forecasting via BigQuery ML. Predict clicks up to 365 days out. |
 | `gsc_anomalies` | ML anomaly detection. Flags genuinely unusual traffic patterns, not just threshold breaches. |
 | `gsc_seasonal` | Year over year monthly comparison. Spot seasonal patterns with YoY percentage changes. |
@@ -187,7 +191,7 @@ Both complement each other. Use the [GSC MCP server](https://github.com/Sugantha
 
 ## What makes this different
 
-**Analysis, not just queries.** Most BigQuery tools give you raw SQL access. This ships with 26 pre-built SEO analysis tools: opportunity scoring, cannibalisation detection, decay tracking, CTR benchmarking, traffic drop diagnosis, ML forecasting, and GA4 + GSC revenue attribution. You ask a question, it runs the analysis and tells you what to do.
+**Analysis, not just queries.** Most BigQuery tools give you raw SQL access. This ships with 27 pre-built SEO analysis tools: opportunity scoring, cannibalisation detection, decay tracking, CTR benchmarking, traffic drop diagnosis, ML forecasting, AI conversation-query detection, and GA4 + GSC revenue attribution. You ask a question, it runs the analysis and tells you what to do.
 
 **ML built in.** ARIMA_PLUS traffic forecasting and anomaly detection run directly in BigQuery. No external services, no extra cost beyond standard BigQuery pricing.
 
@@ -215,7 +219,7 @@ Step by step setup with screenshots, cost breakdowns, and honest comparison with
 
 ## Changelog
 
-**v4.1.0** Generative AI conversation queries, the BigQuery twin. `gsc_genai_conversation_queries` finds the AI conversation fragments hiding in your query data and sorts them into seven kinds: reply artefacts, pivot follow-ups, conversational questions, tracker probes, agent harnesses, pasted strings, and a review pile. Same classifier as the [GSC MCP](https://github.com/Suganthan-Mohanadasan/Suganthans-GSC-MCP) version, run over the bulk export instead of the API, so there are no serving limits on large sites, windows anchor to the export's real freshness, and it reports the anonymised split: how many of your impressions carry no query string at all, which is where most of the conversation pool hides (57.7% on the reference property). Total tools now 33. Full method and findings: [the launch post](https://suganthan.com/blog/ai-mode-queries-search-console/).
+**v4.1.0** Generative AI conversation queries, the BigQuery twin. `gsc_genai_conversation_queries` finds the AI conversation fragments hiding in your query data and sorts them into seven kinds: reply artefacts, pivot follow-ups, conversational questions, tracker probes, agent harnesses, pasted strings, and a review pile. Same classifier as the [GSC MCP](https://github.com/Suganthan-Mohanadasan/Suganthans-GSC-MCP) version, run over the bulk export instead of the API, so there are no serving limits on large sites, windows anchor to the export's real freshness, and it reports the anonymised split: how many of your impressions carry no query string at all, which is where most of the conversation pool hides (57.7% on the reference property). John Mueller made the same point on LinkedIn the day it launched: large sites will find more of these queries in the export than any other route returns. Total tools now 33. Full method and findings: [the launch post](https://suganthan.com/blog/ai-mode-queries-search-console/).
 
 **v4.0.0** GA4 integration. 6 new tools that blend GA4 conversion and revenue data with GSC search data: `ga4_gsc_query_revenue`, `ga4_gsc_content_roi`, `ga4_gsc_position_value`, `ga4_gsc_snippet_mismatch`, `ga4_gsc_branded_performance`, and `ga4_gsc_page_performance`. Requires the GA4 BigQuery export running alongside GSC and one extra environment variable (`BIGQUERY_GA4_DATASET`). Total tools now 32. Full setup guide: [GA4 + GSC in BigQuery](https://suganthan.com/blog/google-analytics-bigquery-mcp-server/).
 
