@@ -16,7 +16,7 @@ async function gscTopicCluster(urlPattern, days = 28, dataset) {
       SUM(clicks) AS total_clicks,
       SUM(impressions) AS total_impressions,
       ROUND(SAFE_DIVIDE(SUM(clicks), SUM(impressions)) * 100, 2) AS avg_ctr_pct,
-      ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)), 1) AS avg_position
+      ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)) + 1, 1) AS avg_position
     FROM \`${ds}.searchdata_url_impression\`
     WHERE
       data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
@@ -29,7 +29,7 @@ async function gscTopicCluster(urlPattern, days = 28, dataset) {
       SUM(clicks) AS clicks,
       SUM(impressions) AS impressions,
       ROUND(SAFE_DIVIDE(SUM(clicks), SUM(impressions)) * 100, 2) AS ctr_pct,
-      ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)), 1) AS avg_position
+      ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)) + 1, 1) AS avg_position
     FROM \`${ds}.searchdata_url_impression\`
     WHERE
       data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
@@ -45,7 +45,7 @@ async function gscTopicCluster(urlPattern, days = 28, dataset) {
       SUM(clicks) AS clicks,
       SUM(impressions) AS impressions,
       ROUND(SAFE_DIVIDE(SUM(clicks), SUM(impressions)) * 100, 2) AS ctr_pct,
-      ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)), 1) AS avg_position
+      ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)) + 1, 1) AS avg_position
     FROM \`${ds}.searchdata_url_impression\`
     WHERE
       data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)

@@ -42,9 +42,10 @@ const gsc_query_count_js_1 = require("./tools/gsc-query-count.js");
 const gsc_discover_js_1 = require("./tools/gsc-discover.js");
 const gsc_click_curve_js_1 = require("./tools/gsc-click-curve.js");
 const gsc_shopping_js_1 = require("./tools/gsc-shopping.js");
+const gsc_image_search_js_1 = require("./tools/gsc-image-search.js");
 const server = new mcp_js_1.McpServer({
     name: "bigquery-mcp",
-    version: "4.2.0",
+    version: "4.3.0",
 });
 function errorResponse(error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -713,10 +714,27 @@ server.tool("gsc_shopping", "Organic shopping surfaces: free product listings (i
         return errorResponse(error);
     }
 });
+// 38. GSC Image Search
+server.tool("gsc_image_search", "Google Images performance from the export: clicks, impressions, CTR, average position, share of all surfaces, time series, top pages, top queries, device and country split, plus the AMP-image-result slice. Unlike Discover, image search does carry queries. Note that url is the page hosting the image, not the image file - the export has no image-level dimension." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
+    days: zod_1.z.number().default(28).describe("Number of days to analyse"),
+    granularity: zod_1.z.enum(["none", "day", "week", "month"]).default("week").describe("Bucket size for the time series"),
+    url_contains: zod_1.z.string().optional().describe("Restrict to URLs containing this string"),
+    top_rows: zod_1.z.number().default(50).describe("How many pages and queries to return"),
+    dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
+}, async ({ days, granularity, url_contains, top_rows, dataset }) => {
+    try {
+        const results = await (0, gsc_image_search_js_1.gscImageSearch)(days, granularity, url_contains, top_rows, dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_image_search", { days, granularity, url_contains, top_rows, dataset });
+        return { content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }] };
+    }
+    catch (error) {
+        return errorResponse(error);
+    }
+});
 async function main() {
     const transport = new stdio_js_1.StdioServerTransport();
     await server.connect(transport);
-    console.error("BigQuery MCP server v4.2.0 running on stdio (37 tools)");
+    console.error("BigQuery MCP server v4.3.0 running on stdio (38 tools)");
 }
 main().catch((error) => {
     console.error("Fatal error:", error);

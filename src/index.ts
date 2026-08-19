@@ -42,10 +42,11 @@ import { gscQueryCount } from "./tools/gsc-query-count.js";
 import { gscDiscover } from "./tools/gsc-discover.js";
 import { gscClickCurve } from "./tools/gsc-click-curve.js";
 import { gscShopping } from "./tools/gsc-shopping.js";
+import { gscImageSearch } from "./tools/gsc-image-search.js";
 
 const server = new McpServer({
   name: "bigquery-mcp",
-  version: "4.2.0",
+  version: "4.3.0",
 });
 
 function errorResponse(error: unknown) {
@@ -906,10 +907,32 @@ server.tool(
   }
 );
 
+// 38. GSC Image Search
+server.tool(
+  "gsc_image_search",
+  "Google Images performance from the export: clicks, impressions, CTR, average position, share of all surfaces, time series, top pages, top queries, device and country split, plus the AMP-image-result slice. Unlike Discover, image search does carry queries. Note that url is the page hosting the image, not the image file - the export has no image-level dimension." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX,
+  {
+    days: z.number().default(28).describe("Number of days to analyse"),
+    granularity: z.enum(["none", "day", "week", "month"]).default("week").describe("Bucket size for the time series"),
+    url_contains: z.string().optional().describe("Restrict to URLs containing this string"),
+    top_rows: z.number().default(50).describe("How many pages and queries to return"),
+    dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
+  },
+  async ({ days, granularity, url_contains, top_rows, dataset }) => {
+    try {
+      const results = await gscImageSearch(days, granularity, url_contains, top_rows, dataset);
+      const wrapped = withMeta(results, "gsc_image_search", { days, granularity, url_contains, top_rows, dataset });
+      return { content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }] };
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+);
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("BigQuery MCP server v4.2.0 running on stdio (37 tools)");
+  console.error("BigQuery MCP server v4.3.0 running on stdio (38 tools)");
 }
 
 main().catch((error) => {

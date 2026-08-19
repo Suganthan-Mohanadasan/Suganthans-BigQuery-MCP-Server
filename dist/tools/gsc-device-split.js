@@ -16,7 +16,7 @@ async function gscDeviceSplit(days = 28, minClicks = 5, dataset) {
         url,
         SUM(clicks) AS clicks,
         SUM(impressions) AS impressions,
-        ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)), 1) AS avg_position,
+        ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)) + 1, 1) AS avg_position,
         ROW_NUMBER() OVER (
           PARTITION BY query, device
           ORDER BY SUM(clicks) DESC
