@@ -1,6 +1,9 @@
 import { runQuery } from "./query.js";
 import { getConfig, validateIdentifier } from "../client.js";
-import { deviceCountryConditions } from "./gsc-shared.js";
+import {
+  deviceCountryConditions,
+  lastExportDay,
+} from "./gsc-shared.js";
 
 export async function gscContentDecay(
   device?: string,
@@ -22,7 +25,7 @@ export async function gscContentDecay(
         SUM(clicks) AS clicks
       FROM \`${ds}.searchdata_url_impression\`
       WHERE
-        data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 4 MONTH)
+        data_date >= DATE_SUB(${lastExportDay(ds, "searchdata_url_impression")}, INTERVAL 4 MONTH)
         AND search_type = 'WEB'
         ${scopeSQL}
       GROUP BY url, month

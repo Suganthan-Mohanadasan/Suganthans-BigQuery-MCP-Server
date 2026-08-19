@@ -1,4 +1,5 @@
 import { runQuery } from "./query.js";
+import { lastExportDay } from "./gsc-shared.js";
 import { getConfig, validateIdentifier } from "../client.js";
 
 export async function gscNewKeywords(
@@ -20,7 +21,7 @@ export async function gscNewKeywords(
         ROUND(SAFE_DIVIDE(SUM(sum_top_position), SUM(impressions)) + 1, 1) AS avg_position
       FROM \`${ds}.searchdata_site_impression\`
       WHERE
-        data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${recentDays} DAY)
+        data_date >= DATE_SUB(${lastExportDay(ds, "searchdata_site_impression")}, INTERVAL ${recentDays} DAY)
         AND is_anonymized_query = false
         AND search_type = 'WEB'
       GROUP BY query
@@ -31,8 +32,8 @@ export async function gscNewKeywords(
       FROM \`${ds}.searchdata_site_impression\`
       WHERE
         data_date BETWEEN
-          DATE_SUB(CURRENT_DATE(), INTERVAL ${recentDays + baselineDays} DAY)
-          AND DATE_SUB(CURRENT_DATE(), INTERVAL ${recentDays + 1} DAY)
+          DATE_SUB(${lastExportDay(ds, "searchdata_site_impression")}, INTERVAL ${recentDays + baselineDays} DAY)
+          AND DATE_SUB(${lastExportDay(ds, "searchdata_site_impression")}, INTERVAL ${recentDays + 1} DAY)
         AND is_anonymized_query = false
         AND search_type = 'WEB'
     )

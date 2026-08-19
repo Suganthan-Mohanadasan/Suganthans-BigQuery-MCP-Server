@@ -1,6 +1,9 @@
 import { runQuery } from "./query.js";
 import { getConfig, validateIdentifier } from "../client.js";
-import { deviceCountryConditions } from "./gsc-shared.js";
+import {
+  deviceCountryConditions,
+  lastExportDay,
+} from "./gsc-shared.js";
 
 export async function gscQuickWins(
   days: number = 28,
@@ -27,7 +30,7 @@ export async function gscQuickWins(
       ROUND(SUM(impressions) * (0.11 - SAFE_DIVIDE(SUM(clicks), SUM(impressions))), 0) AS opportunity
     FROM \`${ds}.searchdata_site_impression\`
     WHERE
-      data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
+      data_date >= DATE_SUB(${lastExportDay(ds, "searchdata_site_impression")}, INTERVAL ${days} DAY)
       AND is_anonymized_query = false
       AND search_type = 'WEB'
       ${scopeSQL}

@@ -394,11 +394,12 @@ server.tool("gsc_anonymous_traffic", "Analyse anonymous (hidden) query traffic t
 });
 // 20. GSC Seasonal Analysis
 server.tool("gsc_seasonal", "Year-over-year seasonal traffic analysis. Shows monthly clicks, impressions, CTR, and position with YoY comparison. Requires 12+ months of BigQuery data. Impossible with the 16-month rolling GSC API." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
+    include_partial_months: zod_1.z.boolean().default(false).describe("Show the first and last month of the export even though they are incomplete. Off by default: a part-month next to full months looks like a collapse when it is only missing data."),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
-}, async ({ dataset }) => {
+}, async ({ include_partial_months, dataset }) => {
     try {
-        const results = await (0, gsc_seasonal_js_1.gscSeasonal)(dataset);
-        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_seasonal", {});
+        const results = await (0, gsc_seasonal_js_1.gscSeasonal)(include_partial_months, dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_seasonal", { include_partial_months });
         return {
             content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
         };

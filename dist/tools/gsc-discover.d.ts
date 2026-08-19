@@ -10,6 +10,10 @@ type QueryResult = {
  * Discover is page-based: there is no query dimension, so nothing here groups
  * by query. Its own anonymisation flag is `is_anonymized_discover`, separate
  * from `is_anonymized_query`.
+ *
+ * There is deliberately no device breakdown: `device` is NULL on every Discover
+ * row, so the block only ever returned a single empty bucket holding every
+ * click. Mobile versus desktop is not answerable for this surface.
  */
 export declare function gscDiscover(days?: number, granularity?: Granularity, urlContains?: string, topUrls?: number, dataset?: string): Promise<{
     period: {
@@ -22,7 +26,6 @@ export declare function gscDiscover(days?: number, granularity?: Granularity, ur
     shareOfSite: QueryResult;
     timeSeries: QueryResult | null;
     topUrls: QueryResult;
-    byDevice: QueryResult;
     byCountry: QueryResult;
 }>;
 export {};

@@ -15,6 +15,10 @@ type QueryResult = { rows: Record<string, unknown>[]; totalRows: number; bytesPr
  * Discover is page-based: there is no query dimension, so nothing here groups
  * by query. Its own anonymisation flag is `is_anonymized_discover`, separate
  * from `is_anonymized_query`.
+ *
+ * There is deliberately no device breakdown: `device` is NULL on every Discover
+ * row, so the block only ever returned a single empty bucket holding every
+ * click. Mobile versus desktop is not answerable for this surface.
  */
 export async function gscDiscover(
   days: number = 28,
@@ -28,7 +32,6 @@ export async function gscDiscover(
   shareOfSite: QueryResult;
   timeSeries: QueryResult | null;
   topUrls: QueryResult;
-  byDevice: QueryResult;
   byCountry: QueryResult;
 }> {
   const config = getConfig();
@@ -111,21 +114,6 @@ export async function gscDiscover(
     LIMIT ${Math.min(topUrls, 500)}
   `;
 
-  const byDeviceSQL = `
-    SELECT
-      device,
-      SUM(clicks) AS clicks,
-      SUM(impressions) AS impressions,
-      ROUND(SAFE_DIVIDE(SUM(clicks), SUM(impressions)) * 100, 2) AS ctr_pct
-    FROM ${table}
-    WHERE ${window}
-      AND search_type = 'DISCOVER'
-      ${urlScope}
-    GROUP BY device
-    ORDER BY clicks DESC
-    LIMIT 10
-  `;
-
   const byCountrySQL = `
     SELECT
       country,
@@ -141,12 +129,11 @@ export async function gscDiscover(
     LIMIT 20
   `;
 
-  const [summary, shareOfSite, timeSeries, topUrlsResult, byDevice, byCountry] = await Promise.all([
+  const [summary, shareOfSite, timeSeries, topUrlsResult, byCountry] = await Promise.all([
     runQuery(summarySQL, 1),
     runQuery(shareOfSiteSQL, 10),
     timeSeriesSQL ? runQuery(timeSeriesSQL, 400) : Promise.resolve(null),
     runQuery(topUrlsSQL, Math.min(topUrls, 500)),
-    runQuery(byDeviceSQL, 10),
     runQuery(byCountrySQL, 20),
   ]);
 
@@ -164,7 +151,6 @@ export async function gscDiscover(
     shareOfSite,
     timeSeries,
     topUrls: topUrlsResult,
-    byDevice,
     byCountry,
   };
 }

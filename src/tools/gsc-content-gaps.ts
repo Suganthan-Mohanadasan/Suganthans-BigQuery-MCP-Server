@@ -1,4 +1,5 @@
 import { runQuery } from "./query.js";
+import { lastExportDay } from "./gsc-shared.js";
 import { getConfig, validateIdentifier } from "../client.js";
 
 export async function gscContentGaps(
@@ -21,7 +22,7 @@ export async function gscContentGaps(
       ROUND(SUM(impressions) * 0.072, 0) AS estimated_clicks_at_pos5
     FROM \`${ds}.searchdata_site_impression\`
     WHERE
-      data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
+      data_date >= DATE_SUB(${lastExportDay(ds, "searchdata_site_impression")}, INTERVAL ${days} DAY)
       AND is_anonymized_query = false
       AND search_type = 'WEB'
     GROUP BY query

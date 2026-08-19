@@ -18,7 +18,7 @@ async function gscContentDecay(device, country, dataset) {
         SUM(clicks) AS clicks
       FROM \`${ds}.searchdata_url_impression\`
       WHERE
-        data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 4 MONTH)
+        data_date >= DATE_SUB(${(0, gsc_shared_js_1.lastExportDay)(ds, "searchdata_url_impression")}, INTERVAL 4 MONTH)
         AND search_type = 'WEB'
         ${scopeSQL}
       GROUP BY url, month

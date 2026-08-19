@@ -21,28 +21,22 @@ async function gscCtrOpportunities(days = 28, minImpressions = 500, device, coun
         ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)) + 1, 1) AS avg_position
       FROM \`${ds}.searchdata_url_impression\`
       WHERE
-        data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
+        data_date >= DATE_SUB(${(0, gsc_shared_js_1.lastExportDay)(ds, "searchdata_url_impression")}, INTERVAL ${days} DAY)
         AND search_type = 'WEB'
         ${scopeSQL}
       GROUP BY url
       HAVING impressions >= ${minImpressions} AND avg_position <= 20
     ),
+${(0, gsc_shared_js_1.measuredCurveCTEs)(ds, Math.max(days, 90), 100, scopeSQL)},
     benchmarks AS (
-      SELECT *,
-        CASE
-          WHEN avg_position <= 1 THEN 28.5
-          WHEN avg_position <= 2 THEN 15.7
-          WHEN avg_position <= 3 THEN 11.0
-          WHEN avg_position <= 4 THEN 8.0
-          WHEN avg_position <= 5 THEN 7.2
-          WHEN avg_position <= 6 THEN 5.1
-          WHEN avg_position <= 7 THEN 4.0
-          WHEN avg_position <= 8 THEN 3.2
-          WHEN avg_position <= 9 THEN 2.8
-          WHEN avg_position <= 10 THEN 2.5
-          ELSE GREATEST(0.5, 2.5 - (avg_position - 10) * 0.2)
-        END AS benchmark_ctr_pct
+      SELECT
+        page_metrics.*,
+        ROUND(COALESCE(curve.measured_ctr_pct, ${(0, gsc_shared_js_1.studyBenchmarkCaseSQL)("page_metrics.avg_position")}), 2)
+          AS benchmark_ctr_pct,
+        IF(curve.measured_ctr_pct IS NULL, 'study', 'measured') AS benchmark_source
       FROM page_metrics
+      LEFT JOIN curve
+        ON CAST(ROUND(page_metrics.avg_position) AS INT64) = curve.rank
     )
     SELECT
       url,
@@ -51,6 +45,7 @@ async function gscCtrOpportunities(days = 28, minImpressions = 500, device, coun
       actual_ctr_pct,
       avg_position,
       benchmark_ctr_pct,
+      benchmark_source,
       ROUND(benchmark_ctr_pct - actual_ctr_pct, 2) AS ctr_gap_pct,
       ROUND(impressions * (benchmark_ctr_pct - actual_ctr_pct) / 100, 0) AS potential_extra_clicks
     FROM benchmarks

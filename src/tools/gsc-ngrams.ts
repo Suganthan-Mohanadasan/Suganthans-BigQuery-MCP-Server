@@ -1,4 +1,5 @@
 import { runQuery } from "./query.js";
+import { lastExportDay } from "./gsc-shared.js";
 import { getConfig, validateIdentifier } from "../client.js";
 
 export async function gscNgrams(
@@ -18,7 +19,7 @@ export async function gscNgrams(
         SUM(impressions) AS impressions
       FROM \`${ds}.searchdata_site_impression\`
       WHERE
-        data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
+        data_date >= DATE_SUB(${lastExportDay(ds, "searchdata_site_impression")}, INTERVAL ${days} DAY)
         AND is_anonymized_query = false
         AND search_type = 'WEB'
       GROUP BY query

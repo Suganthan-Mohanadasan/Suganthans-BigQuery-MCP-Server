@@ -48,6 +48,82 @@ export function normaliseSearchType(value: string): ExportSearchType {
   return upper;
 }
 
+/**
+ * Der letzte Tag, den der Export enthaelt - als SQL-Ausdruck.
+ *
+ * Ersetzt CURRENT_DATE() in den Zeitfenstern. Der Bulk-Export laeuft zwei bis drei
+ * Tage nach, ein Fenster ab heute nimmt also leere Tage mit: gemessen deckte
+ * "letzte 7 Tage" real nur vier Tage ab und meldete entsprechend zu wenig.
+ *
+ * Die Unterabfrage laeuft nur ueber die Partitionsspalte und ist damit billig.
+ */
+export function lastExportDay(
+  ds: string,
+  table: "searchdata_url_impression" | "searchdata_site_impression" = "searchdata_url_impression"
+): string {
+  return `(SELECT MAX(data_date) FROM \`${ds}.${table}\`)`;
+}
+
+/**
+ * Die Studienkurve als SQL-CASE - nur der Rueckfall.
+ *
+ * Branchenweite Fremdwerte. Gemessen an einer Content-Property liegt die echte
+ * CTR auf Position 1 bei 3,5 % gegen die 28,5 % hier, Faktor 8. Wer dagegen
+ * bewertet, stempelt fast jede Seite als unterdurchschnittlich.
+ */
+export function studyBenchmarkCaseSQL(positionColumn: string): string {
+  return `CASE
+          WHEN ${positionColumn} <= 1 THEN 28.5
+          WHEN ${positionColumn} <= 2 THEN 15.7
+          WHEN ${positionColumn} <= 3 THEN 11.0
+          WHEN ${positionColumn} <= 4 THEN 8.0
+          WHEN ${positionColumn} <= 5 THEN 7.2
+          WHEN ${positionColumn} <= 6 THEN 5.1
+          WHEN ${positionColumn} <= 7 THEN 4.0
+          WHEN ${positionColumn} <= 8 THEN 3.2
+          WHEN ${positionColumn} <= 9 THEN 2.8
+          WHEN ${positionColumn} <= 10 THEN 2.5
+          ELSE GREATEST(0.5, 2.5 - (${positionColumn} - 10) * 0.2)
+        END`;
+}
+
+/**
+ * CTEs, die die eigene Klickkurve aus dem Export bauen: curve_pairs und curve.
+ *
+ * Erst auf (url, query) aggregieren und daraus die Durchschnittsposition nehmen,
+ * dann auf den gerundeten Rang buendeln. CTR je Rang ist Summe der Klicks durch
+ * Summe der Impressionen, nie ein Mittel aus Verhaeltnissen. Raenge unter
+ * minImpressionsPerRank fallen raus und werden von der Studienkurve gedeckt.
+ */
+export function measuredCurveCTEs(
+  ds: string,
+  curveDays: number = 90,
+  minImpressionsPerRank: number = 100,
+  scopeSQL: string = ""
+): string {
+  return `curve_pairs AS (
+      SELECT
+        SUM(clicks) AS curve_clicks,
+        SUM(impressions) AS curve_impressions,
+        ${AVG_POSITION_SQL} AS curve_position
+      FROM \`${ds}.searchdata_url_impression\`
+      WHERE
+        data_date >= DATE_SUB(${lastExportDay(ds, "searchdata_url_impression")}, INTERVAL ${curveDays} DAY)
+        AND search_type = 'WEB'
+        AND query IS NOT NULL
+        ${scopeSQL}
+      GROUP BY url, query
+    ),
+    curve AS (
+      SELECT
+        CAST(ROUND(curve_position) AS INT64) AS rank,
+        SAFE_DIVIDE(SUM(curve_clicks), SUM(curve_impressions)) * 100 AS measured_ctr_pct
+      FROM curve_pairs
+      GROUP BY rank
+      HAVING SUM(curve_impressions) >= ${minImpressionsPerRank}
+    )`;
+}
+
 /** Devices as spelled in the export. */
 export const DEVICES = ["MOBILE", "DESKTOP", "TABLET"] as const;
 export type Device = (typeof DEVICES)[number];

@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.gscCannibalisation = gscCannibalisation;
 const query_js_1 = require("./query.js");
+const gsc_shared_js_1 = require("./gsc-shared.js");
 const client_js_1 = require("../client.js");
 async function gscCannibalisation(days = 28, minImpressions = 50, dataset) {
     const config = (0, client_js_1.getConfig)();
@@ -17,7 +18,7 @@ async function gscCannibalisation(days = 28, minImpressions = 50, dataset) {
         ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)) + 1, 1) AS avg_position
       FROM \`${ds}.searchdata_url_impression\`
       WHERE
-        data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
+        data_date >= DATE_SUB(${(0, gsc_shared_js_1.lastExportDay)(ds, "searchdata_url_impression")}, INTERVAL ${days} DAY)
         AND is_anonymized_query = false
         AND search_type = 'WEB'
       GROUP BY query, url

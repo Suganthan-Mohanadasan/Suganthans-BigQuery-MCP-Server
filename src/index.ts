@@ -498,12 +498,13 @@ server.tool(
   "gsc_seasonal",
   "Year-over-year seasonal traffic analysis. Shows monthly clicks, impressions, CTR, and position with YoY comparison. Requires 12+ months of BigQuery data. Impossible with the 16-month rolling GSC API." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX,
   {
+    include_partial_months: z.boolean().default(false).describe("Show the first and last month of the export even though they are incomplete. Off by default: a part-month next to full months looks like a collapse when it is only missing data."),
     dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
   },
-  async ({ dataset }) => {
+  async ({ include_partial_months, dataset }) => {
     try {
-      const results = await gscSeasonal(dataset);
-      const wrapped = withMeta(results, "gsc_seasonal", {});
+      const results = await gscSeasonal(include_partial_months, dataset);
+      const wrapped = withMeta(results, "gsc_seasonal", { include_partial_months });
       return {
         content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
       };
