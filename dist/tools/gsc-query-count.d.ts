@@ -11,7 +11,7 @@ type QueryResult = {
  * export instead of a 1,000-row page, and it reads the anonymized share from
  * the `is_anonymized_query` flag rather than inferring it from a click gap.
  */
-export declare function gscQueryCount(days?: number, url?: string, urlContains?: string, granularity?: Granularity, minPosition?: number, maxPosition?: number, searchType?: string, topPages?: number, dataset?: string): Promise<{
+export declare function gscQueryCount(days?: number, url?: string, urlContains?: string, granularity?: Granularity, minPosition?: number, maxPosition?: number, searchType?: string, topPages?: number, device?: string, country?: string, dataset?: string): Promise<{
     period: {
         startDate: string;
         endDate: string;

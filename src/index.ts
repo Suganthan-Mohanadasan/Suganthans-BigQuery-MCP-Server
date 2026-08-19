@@ -206,12 +206,14 @@ server.tool(
     days: z.number().default(28).describe("Number of days to analyse"),
     min_impressions: z.number().default(100).describe("Minimum impressions threshold"),
     max_position: z.number().default(15).describe("Maximum position to include"),
+    device: z.enum(["MOBILE", "DESKTOP", "TABLET"]).optional().describe("Restrict to one device. Omit for all devices, which is the default."),
+    country: z.string().optional().describe("Restrict to one country as an ISO-3166-1 alpha-3 code, e.g. deu, aut, che. Omit for all countries, which is the default."),
     dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
   },
-  async ({ days, min_impressions, max_position, dataset }) => {
+  async ({ days, min_impressions, max_position, device, country, dataset }) => {
     try {
-      const results = await gscQuickWins(days, min_impressions, max_position, dataset);
-      const wrapped = withMeta(results, "gsc_quick_wins", { days, min_impressions, max_position });
+      const results = await gscQuickWins(days, min_impressions, max_position, device, country, dataset);
+      const wrapped = withMeta(results, "gsc_quick_wins", { days, min_impressions, max_position, device, country });
       return {
         content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
       };
@@ -228,12 +230,14 @@ server.tool(
   {
     days: z.number().default(28).describe("Number of days to analyse"),
     min_impressions: z.number().default(500).describe("Minimum impressions threshold"),
+    device: z.enum(["MOBILE", "DESKTOP", "TABLET"]).optional().describe("Restrict to one device. Omit for all devices, which is the default."),
+    country: z.string().optional().describe("Restrict to one country as an ISO-3166-1 alpha-3 code, e.g. deu, aut, che. Omit for all countries, which is the default."),
     dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
   },
-  async ({ days, min_impressions, dataset }) => {
+  async ({ days, min_impressions, device, country, dataset }) => {
     try {
-      const results = await gscCtrOpportunities(days, min_impressions, dataset);
-      const wrapped = withMeta(results, "gsc_ctr_opportunities", { days, min_impressions });
+      const results = await gscCtrOpportunities(days, min_impressions, device, country, dataset);
+      const wrapped = withMeta(results, "gsc_ctr_opportunities", { days, min_impressions, device, country });
       return {
         content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
       };
@@ -292,12 +296,14 @@ server.tool(
   "gsc_content_decay",
   "Find pages with consistent traffic decline over three consecutive months from GSC bulk export data. One bad month is noise; three is a problem." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX,
   {
+    device: z.enum(["MOBILE", "DESKTOP", "TABLET"]).optional().describe("Restrict to one device. Omit for all devices, which is the default."),
+    country: z.string().optional().describe("Restrict to one country as an ISO-3166-1 alpha-3 code, e.g. deu, aut, che. Omit for all countries, which is the default."),
     dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
   },
-  async ({ dataset }) => {
+  async ({ device, country, dataset }) => {
     try {
-      const results = await gscContentDecay(dataset);
-      const wrapped = withMeta(results, "gsc_content_decay", {});
+      const results = await gscContentDecay(device, country, dataset);
+      const wrapped = withMeta(results, "gsc_content_decay", { device, country });
       return {
         content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
       };
@@ -824,12 +830,14 @@ server.tool(
     max_position: z.number().optional().describe("Only count queries at this average position or better (e.g. 10)"),
     search_type: z.enum(["WEB", "IMAGE", "VIDEO", "NEWS", "GOOGLE_NEWS"]).default("WEB").describe("Surface to count. Discover has no queries; use gsc_discover."),
     top_pages: z.number().optional().describe("Also rank this many pages by query count"),
+    device: z.enum(["MOBILE", "DESKTOP", "TABLET"]).optional().describe("Restrict to one device. Omit for all devices, which is the default."),
+    country: z.string().optional().describe("Restrict to one country as an ISO-3166-1 alpha-3 code, e.g. deu, aut, che. Omit for all countries, which is the default."),
     dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
   },
-  async ({ days, url, url_contains, granularity, min_position, max_position, search_type, top_pages, dataset }) => {
+  async ({ days, url, url_contains, granularity, min_position, max_position, search_type, top_pages, device, country, dataset }) => {
     try {
-      const results = await gscQueryCount(days, url, url_contains, granularity, min_position, max_position, search_type, top_pages, dataset);
-      const wrapped = withMeta(results, "gsc_query_count", { days, url, url_contains, granularity, min_position, max_position, search_type, top_pages, dataset });
+      const results = await gscQueryCount(days, url, url_contains, granularity, min_position, max_position, search_type, top_pages, device, country, dataset);
+      const wrapped = withMeta(results, "gsc_query_count", { days, url, url_contains, granularity, min_position, max_position, search_type, top_pages, device, country, dataset });
       return { content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }] };
     } catch (error) {
       return errorResponse(error);

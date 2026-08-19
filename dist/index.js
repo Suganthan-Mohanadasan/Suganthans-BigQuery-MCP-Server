@@ -168,11 +168,13 @@ server.tool("gsc_quick_wins", "Find keywords from GSC bulk export data at positi
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     min_impressions: zod_1.z.number().default(100).describe("Minimum impressions threshold"),
     max_position: zod_1.z.number().default(15).describe("Maximum position to include"),
+    device: zod_1.z.enum(["MOBILE", "DESKTOP", "TABLET"]).optional().describe("Restrict to one device. Omit for all devices, which is the default."),
+    country: zod_1.z.string().optional().describe("Restrict to one country as an ISO-3166-1 alpha-3 code, e.g. deu, aut, che. Omit for all countries, which is the default."),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
-}, async ({ days, min_impressions, max_position, dataset }) => {
+}, async ({ days, min_impressions, max_position, device, country, dataset }) => {
     try {
-        const results = await (0, gsc_quick_wins_js_1.gscQuickWins)(days, min_impressions, max_position, dataset);
-        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_quick_wins", { days, min_impressions, max_position });
+        const results = await (0, gsc_quick_wins_js_1.gscQuickWins)(days, min_impressions, max_position, device, country, dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_quick_wins", { days, min_impressions, max_position, device, country });
         return {
             content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
         };
@@ -185,11 +187,13 @@ server.tool("gsc_quick_wins", "Find keywords from GSC bulk export data at positi
 server.tool("gsc_ctr_opportunities", "Find pages with high impressions but CTR significantly below the expected benchmark for their ranking position. These are title and meta description optimisation candidates." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     min_impressions: zod_1.z.number().default(500).describe("Minimum impressions threshold"),
+    device: zod_1.z.enum(["MOBILE", "DESKTOP", "TABLET"]).optional().describe("Restrict to one device. Omit for all devices, which is the default."),
+    country: zod_1.z.string().optional().describe("Restrict to one country as an ISO-3166-1 alpha-3 code, e.g. deu, aut, che. Omit for all countries, which is the default."),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
-}, async ({ days, min_impressions, dataset }) => {
+}, async ({ days, min_impressions, device, country, dataset }) => {
     try {
-        const results = await (0, gsc_ctr_opportunities_js_1.gscCtrOpportunities)(days, min_impressions, dataset);
-        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_ctr_opportunities", { days, min_impressions });
+        const results = await (0, gsc_ctr_opportunities_js_1.gscCtrOpportunities)(days, min_impressions, device, country, dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_ctr_opportunities", { days, min_impressions, device, country });
         return {
             content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
         };
@@ -234,11 +238,13 @@ server.tool("gsc_site_snapshot", "Get a quick overview of how the site is perfor
 });
 // 11. GSC Content Decay
 server.tool("gsc_content_decay", "Find pages with consistent traffic decline over three consecutive months from GSC bulk export data. One bad month is noise; three is a problem." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
+    device: zod_1.z.enum(["MOBILE", "DESKTOP", "TABLET"]).optional().describe("Restrict to one device. Omit for all devices, which is the default."),
+    country: zod_1.z.string().optional().describe("Restrict to one country as an ISO-3166-1 alpha-3 code, e.g. deu, aut, che. Omit for all countries, which is the default."),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
-}, async ({ dataset }) => {
+}, async ({ device, country, dataset }) => {
     try {
-        const results = await (0, gsc_content_decay_js_1.gscContentDecay)(dataset);
-        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_content_decay", {});
+        const results = await (0, gsc_content_decay_js_1.gscContentDecay)(device, country, dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_content_decay", { device, country });
         return {
             content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
         };
@@ -648,11 +654,13 @@ server.tool("gsc_query_count", "Count how many distinct queries a property, a se
     max_position: zod_1.z.number().optional().describe("Only count queries at this average position or better (e.g. 10)"),
     search_type: zod_1.z.enum(["WEB", "IMAGE", "VIDEO", "NEWS", "GOOGLE_NEWS"]).default("WEB").describe("Surface to count. Discover has no queries; use gsc_discover."),
     top_pages: zod_1.z.number().optional().describe("Also rank this many pages by query count"),
+    device: zod_1.z.enum(["MOBILE", "DESKTOP", "TABLET"]).optional().describe("Restrict to one device. Omit for all devices, which is the default."),
+    country: zod_1.z.string().optional().describe("Restrict to one country as an ISO-3166-1 alpha-3 code, e.g. deu, aut, che. Omit for all countries, which is the default."),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
-}, async ({ days, url, url_contains, granularity, min_position, max_position, search_type, top_pages, dataset }) => {
+}, async ({ days, url, url_contains, granularity, min_position, max_position, search_type, top_pages, device, country, dataset }) => {
     try {
-        const results = await (0, gsc_query_count_js_1.gscQueryCount)(days, url, url_contains, granularity, min_position, max_position, search_type, top_pages, dataset);
-        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_query_count", { days, url, url_contains, granularity, min_position, max_position, search_type, top_pages, dataset });
+        const results = await (0, gsc_query_count_js_1.gscQueryCount)(days, url, url_contains, granularity, min_position, max_position, search_type, top_pages, device, country, dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_query_count", { days, url, url_contains, granularity, min_position, max_position, search_type, top_pages, device, country, dataset });
         return { content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }] };
     }
     catch (error) {

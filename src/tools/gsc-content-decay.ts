@@ -1,12 +1,18 @@
 import { runQuery } from "./query.js";
 import { getConfig, validateIdentifier } from "../client.js";
+import { deviceCountryConditions } from "./gsc-shared.js";
 
 export async function gscContentDecay(
+  device?: string,
+  country?: string,
   dataset?: string
 ): Promise<{ rows: Record<string, unknown>[]; totalRows: number; bytesProcessed: string }> {
   const config = getConfig();
   const ds = dataset || config.defaultDataset || "searchconsole";
   validateIdentifier(ds, "dataset");
+
+  const extra = deviceCountryConditions(device, country, "WEB");
+  const scopeSQL = extra.length ? `AND ${extra.join("\n        AND ")}` : "";
 
   const sql = `
     WITH monthly AS (
@@ -18,6 +24,7 @@ export async function gscContentDecay(
       WHERE
         data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 4 MONTH)
         AND search_type = 'WEB'
+        ${scopeSQL}
       GROUP BY url, month
     ),
     ranked AS (

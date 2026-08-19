@@ -3,9 +3,12 @@
  * Shared SQL building blocks for the GSC bulk export tables.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SEARCH_TYPES = exports.GRANULARITY_TRUNC = exports.AVG_POSITION_SQL = void 0;
+exports.DEVICES = exports.SEARCH_TYPES = exports.GRANULARITY_TRUNC = exports.AVG_POSITION_SQL = void 0;
 exports.positionGroupSQL = positionGroupSQL;
 exports.normaliseSearchType = normaliseSearchType;
+exports.normaliseDevice = normaliseDevice;
+exports.normaliseCountry = normaliseCountry;
+exports.deviceCountryConditions = deviceCountryConditions;
 exports.escapeSQLString = escapeSQLString;
 exports.getLastExportDate = getLastExportDate;
 /**
@@ -43,6 +46,45 @@ function normaliseSearchType(value) {
         throw new Error(`Unknown search_type "${value}". Allowed: ${exports.SEARCH_TYPES.join(", ")}.`);
     }
     return upper;
+}
+/** Devices as spelled in the export. */
+exports.DEVICES = ["MOBILE", "DESKTOP", "TABLET"];
+function normaliseDevice(value) {
+    const upper = value.toUpperCase();
+    if (!exports.DEVICES.includes(upper)) {
+        throw new Error(`Unknown device "${value}". Allowed: ${exports.DEVICES.join(", ")}.`);
+    }
+    return upper;
+}
+/** Countries are ISO-3166-1 alpha-3, lowercase in the export (deu, aut, che, usa). */
+function normaliseCountry(value) {
+    const lower = value.toLowerCase();
+    if (!/^[a-z]{3}$/.test(lower)) {
+        throw new Error(`Country must be an ISO-3166-1 alpha-3 code such as deu, aut, che or usa - got "${value}".`);
+    }
+    return lower;
+}
+/**
+ * WHERE conditions for device and country.
+ *
+ * Both are optional and unset means unfiltered - every tool keeps returning all
+ * devices and all countries unless asked otherwise.
+ *
+ * Discover carries no device: the column is NULL on every DISCOVER row, so a
+ * device filter there would silently return nothing. That fails loudly instead.
+ */
+function deviceCountryConditions(device, country, searchType) {
+    const conditions = [];
+    if (device) {
+        if (searchType && searchType.toUpperCase() === "DISCOVER") {
+            throw new Error("Discover rows carry no device - the column is NULL for every Discover impression, so a device filter cannot match. Drop the device argument, or query a different surface.");
+        }
+        conditions.push(`device = '${normaliseDevice(device)}'`);
+    }
+    if (country) {
+        conditions.push(`country = '${normaliseCountry(country)}'`);
+    }
+    return conditions;
 }
 /** Doubles single quotes, matching the escaping the other tools in this server use. */
 function escapeSQLString(value) {

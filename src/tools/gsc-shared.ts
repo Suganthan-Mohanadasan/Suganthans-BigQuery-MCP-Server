@@ -48,6 +48,61 @@ export function normaliseSearchType(value: string): ExportSearchType {
   return upper;
 }
 
+/** Devices as spelled in the export. */
+export const DEVICES = ["MOBILE", "DESKTOP", "TABLET"] as const;
+export type Device = (typeof DEVICES)[number];
+
+export function normaliseDevice(value: string): Device {
+  const upper = value.toUpperCase() as Device;
+  if (!DEVICES.includes(upper)) {
+    throw new Error(`Unknown device "${value}". Allowed: ${DEVICES.join(", ")}.`);
+  }
+  return upper;
+}
+
+/** Countries are ISO-3166-1 alpha-3, lowercase in the export (deu, aut, che, usa). */
+export function normaliseCountry(value: string): string {
+  const lower = value.toLowerCase();
+  if (!/^[a-z]{3}$/.test(lower)) {
+    throw new Error(
+      `Country must be an ISO-3166-1 alpha-3 code such as deu, aut, che or usa - got "${value}".`
+    );
+  }
+  return lower;
+}
+
+/**
+ * WHERE conditions for device and country.
+ *
+ * Both are optional and unset means unfiltered - every tool keeps returning all
+ * devices and all countries unless asked otherwise.
+ *
+ * Discover carries no device: the column is NULL on every DISCOVER row, so a
+ * device filter there would silently return nothing. That fails loudly instead.
+ */
+export function deviceCountryConditions(
+  device?: string,
+  country?: string,
+  searchType?: string
+): string[] {
+  const conditions: string[] = [];
+
+  if (device) {
+    if (searchType && searchType.toUpperCase() === "DISCOVER") {
+      throw new Error(
+        "Discover rows carry no device - the column is NULL for every Discover impression, so a device filter cannot match. Drop the device argument, or query a different surface."
+      );
+    }
+    conditions.push(`device = '${normaliseDevice(device)}'`);
+  }
+
+  if (country) {
+    conditions.push(`country = '${normaliseCountry(country)}'`);
+  }
+
+  return conditions;
+}
+
 /** Doubles single quotes, matching the escaping the other tools in this server use. */
 export function escapeSQLString(value: string): string {
   return value.replace(/'/g, "''");

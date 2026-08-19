@@ -8,6 +8,7 @@ import {
   normaliseSearchType,
   escapeSQLString,
   getLastExportDate,
+  deviceCountryConditions,
 } from "./gsc-shared.js";
 
 type QueryResult = { rows: Record<string, unknown>[]; totalRows: number; bytesProcessed: string };
@@ -28,6 +29,8 @@ export async function gscQueryCount(
   maxPosition?: number,
   searchType: string = "WEB",
   topPages?: number,
+  device?: string,
+  country?: string,
   dataset?: string
 ): Promise<{
   period: { startDate: string; endDate: string; days: number; anchoredTo: string };
@@ -54,6 +57,7 @@ export async function gscQueryCount(
   const scope: string[] = [`search_type = '${type}'`];
   if (url) scope.push(`url = '${escapeSQLString(url)}'`);
   if (urlContains) scope.push(`url LIKE '%${escapeSQLString(urlContains)}%'`);
+  scope.push(...deviceCountryConditions(device, country, type));
   const scopeSQL = scope.length ? `AND ${scope.join("\n      AND ")}` : "";
 
   const currentWindow = `data_date > DATE_SUB(DATE '${lastDay}', INTERVAL ${days} DAY)

@@ -11,7 +11,7 @@ const gsc_shared_js_1 = require("./gsc-shared.js");
  * export instead of a 1,000-row page, and it reads the anonymized share from
  * the `is_anonymized_query` flag rather than inferring it from a click gap.
  */
-async function gscQueryCount(days = 28, url, urlContains, granularity = "none", minPosition, maxPosition, searchType = "WEB", topPages, dataset) {
+async function gscQueryCount(days = 28, url, urlContains, granularity = "none", minPosition, maxPosition, searchType = "WEB", topPages, device, country, dataset) {
     const config = (0, client_js_1.getConfig)();
     const ds = dataset || config.defaultDataset || "searchconsole";
     (0, client_js_1.validateIdentifier)(ds, "dataset");
@@ -26,6 +26,7 @@ async function gscQueryCount(days = 28, url, urlContains, granularity = "none", 
         scope.push(`url = '${(0, gsc_shared_js_1.escapeSQLString)(url)}'`);
     if (urlContains)
         scope.push(`url LIKE '%${(0, gsc_shared_js_1.escapeSQLString)(urlContains)}%'`);
+    scope.push(...(0, gsc_shared_js_1.deviceCountryConditions)(device, country, type));
     const scopeSQL = scope.length ? `AND ${scope.join("\n      AND ")}` : "";
     const currentWindow = `data_date > DATE_SUB(DATE '${lastDay}', INTERVAL ${days} DAY)
       AND data_date <= DATE '${lastDay}'`;

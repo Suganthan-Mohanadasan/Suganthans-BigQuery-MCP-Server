@@ -1,14 +1,20 @@
 import { runQuery } from "./query.js";
 import { getConfig, validateIdentifier } from "../client.js";
+import { deviceCountryConditions } from "./gsc-shared.js";
 
 export async function gscCtrOpportunities(
   days: number = 28,
   minImpressions: number = 500,
+  device?: string,
+  country?: string,
   dataset?: string
 ): Promise<{ rows: Record<string, unknown>[]; totalRows: number; bytesProcessed: string }> {
   const config = getConfig();
   const ds = dataset || config.defaultDataset || "searchconsole";
   validateIdentifier(ds, "dataset");
+
+  const extra = deviceCountryConditions(device, country, "WEB");
+  const scopeSQL = extra.length ? `AND ${extra.join("\n        AND ")}` : "";
 
   // CTR benchmarks by position (positions 1-10), extrapolates beyond 10
   const sql = `
@@ -23,6 +29,7 @@ export async function gscCtrOpportunities(
       WHERE
         data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
         AND search_type = 'WEB'
+        ${scopeSQL}
       GROUP BY url
       HAVING impressions >= ${minImpressions} AND avg_position <= 20
     ),

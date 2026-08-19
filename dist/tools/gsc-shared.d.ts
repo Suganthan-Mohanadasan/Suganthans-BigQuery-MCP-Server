@@ -21,6 +21,22 @@ export declare const GRANULARITY_TRUNC: Record<Exclude<Granularity, "none">, str
 export declare const SEARCH_TYPES: readonly ["WEB", "IMAGE", "VIDEO", "NEWS", "GOOGLE_NEWS", "DISCOVER"];
 export type ExportSearchType = (typeof SEARCH_TYPES)[number];
 export declare function normaliseSearchType(value: string): ExportSearchType;
+/** Devices as spelled in the export. */
+export declare const DEVICES: readonly ["MOBILE", "DESKTOP", "TABLET"];
+export type Device = (typeof DEVICES)[number];
+export declare function normaliseDevice(value: string): Device;
+/** Countries are ISO-3166-1 alpha-3, lowercase in the export (deu, aut, che, usa). */
+export declare function normaliseCountry(value: string): string;
+/**
+ * WHERE conditions for device and country.
+ *
+ * Both are optional and unset means unfiltered - every tool keeps returning all
+ * devices and all countries unless asked otherwise.
+ *
+ * Discover carries no device: the column is NULL on every DISCOVER row, so a
+ * device filter there would silently return nothing. That fails loudly instead.
+ */
+export declare function deviceCountryConditions(device?: string, country?: string, searchType?: string): string[];
 /** Doubles single quotes, matching the escaping the other tools in this server use. */
 export declare function escapeSQLString(value: string): string;
 /**
