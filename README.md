@@ -113,9 +113,9 @@ Your service account needs three IAM roles: **BigQuery Data Editor**, **BigQuery
 >
 > **Want the GA4 + GSC blending tools too?** Add the GA4 BigQuery export and one extra environment variable (`BIGQUERY_GA4_DATASET`). Full walkthrough: [GA4 + GSC in BigQuery setup guide](https://suganthan.com/blog/google-analytics-bigquery-mcp-server/).
 
-## All 33 tools
+## All 37 tools
 
-### BigQuery exclusive (9)
+### BigQuery exclusive (13)
 
 These use BigQuery capabilities the Search Console API simply doesn't have.
 
@@ -130,6 +130,10 @@ These use BigQuery capabilities the Search Console API simply doesn't have.
 | `gsc_intent_breakdown` | Classify all queries by search intent: informational, transactional, commercial, navigational. |
 | `gsc_ngrams` | Extract recurring terms from queries. Find themes your content should cover. |
 | `gsc_new_keywords` | Queries appearing in recent data that weren't present before. |
+| `gsc_query_count` | How many distinct queries a site, section or single URL is visible for, by position group, over time, against the previous period. Counts the whole export instead of a 1,000-row page, and reads the anonymised share from `is_anonymized_query` instead of inferring it. |
+| `gsc_discover` | Google Discover performance: clicks, impressions, CTR, share of all surfaces, time series, top URLs, country split. Page-based, with its own `is_anonymized_discover` flag. |
+| `gsc_click_curve` | Your own click curve: CTR per rank measured on your data, not borrowed from a study. Segment by device, country, surface, or branded vs non-branded. Also reports the clicks it cannot cover. |
+| `gsc_shopping` | Organic shopping surfaces: free product listings, merchant listings, product snippets. Search appearances inside WEB rows, so they cross freely with url, query, device and date - unlike the API's `searchAppearance` dimension. |
 
 ### GSC analysis (12)
 
