@@ -34,7 +34,7 @@ async function listTables(dataset, projectId) {
     FROM \`${targetProject}.${dataset}.INFORMATION_SCHEMA.COLUMNS\`
     ORDER BY table_name, ordinal_position
   `;
-    const location = (0, client_js_1.resolveLocation)(targetProject);
+    const location = (0, client_js_1.resolveLocation)(targetProject, dataset);
     const [tableJob] = await client.createQueryJob({ query: tableQuery, location });
     const [columnJob] = await client.createQueryJob({ query: columnQuery, location });
     const [tableRows] = await tableJob.getQueryResults();

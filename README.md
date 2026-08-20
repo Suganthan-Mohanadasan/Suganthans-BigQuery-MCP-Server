@@ -213,7 +213,8 @@ Both complement each other. Use the [GSC MCP server](https://github.com/Sugantha
 | `BIGQUERY_PROJECT_ID` | Yes | Your Google Cloud project ID |
 | `BIGQUERY_KEY_FILE` | No | Path to service account JSON key (falls back to `GOOGLE_APPLICATION_CREDENTIALS`) |
 | `BIGQUERY_DEFAULT_DATASET` | No | Default dataset for queries (e.g. `searchconsole`) |
-| `BIGQUERY_LOCATION` | No | Dataset location (default: `US`). Set to `EU`, `asia-southeast1`, etc. if needed. |
+| `BIGQUERY_LOCATION` | No | Default dataset location (default: `US`). Set to `EU`, `asia-southeast1`, etc. if needed. |
+| `BIGQUERY_DATASET_LOCATIONS` | No | Per-dataset location overrides for projects whose datasets live in different regions. Format: `dataset:location,project.dataset:location` (e.g. `searchconsole_old:europe-west3,analytics_123456789:EU`). Datasets not listed fall back to `BIGQUERY_LOCATION`. A query touching datasets in two different locations is rejected with a clear error, because BigQuery cannot join across locations. |
 | `BIGQUERY_GA4_DATASET` | No | GA4 export dataset name (e.g. `analytics_123456789`). Only needed for the 6 `ga4_gsc_*` blending tools. |
 
 ## Full guide
