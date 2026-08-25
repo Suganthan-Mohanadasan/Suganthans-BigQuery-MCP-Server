@@ -13,10 +13,10 @@ async function gscNewKeywords(recentDays = 7, baselineDays = 60, minImpressions 
         query,
         SUM(clicks) AS clicks,
         SUM(impressions) AS impressions,
-        ROUND(SAFE_DIVIDE(SUM(sum_top_position), SUM(impressions)), 1) AS avg_position
+        ROUND(SAFE_DIVIDE(SUM(sum_top_position), SUM(impressions)) + 1, 1) AS avg_position
       FROM \`${ds}.searchdata_site_impression\`
       WHERE
-        data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${recentDays} DAY)
+        data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_site_impression\`), INTERVAL ${recentDays} DAY)
         AND is_anonymized_query = false
         AND search_type = 'WEB'
       GROUP BY query
@@ -27,8 +27,8 @@ async function gscNewKeywords(recentDays = 7, baselineDays = 60, minImpressions 
       FROM \`${ds}.searchdata_site_impression\`
       WHERE
         data_date BETWEEN
-          DATE_SUB(CURRENT_DATE(), INTERVAL ${recentDays + baselineDays} DAY)
-          AND DATE_SUB(CURRENT_DATE(), INTERVAL ${recentDays + 1} DAY)
+          DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_site_impression\`), INTERVAL ${recentDays + baselineDays} DAY)
+          AND DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_site_impression\`), INTERVAL ${recentDays + 1} DAY)
         AND is_anonymized_query = false
         AND search_type = 'WEB'
     )

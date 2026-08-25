@@ -16,14 +16,14 @@ async function gscDeviceSplit(days = 28, minClicks = 5, dataset) {
         url,
         SUM(clicks) AS clicks,
         SUM(impressions) AS impressions,
-        ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)), 1) AS avg_position,
+        ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)) + 1, 1) AS avg_position,
         ROW_NUMBER() OVER (
           PARTITION BY query, device
           ORDER BY SUM(clicks) DESC
         ) AS rn
       FROM \`${ds}.searchdata_url_impression\`
       WHERE
-        data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
+        data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days} DAY)
         AND is_anonymized_query = false
         AND search_type = 'WEB'
         AND device IN ('MOBILE', 'DESKTOP')

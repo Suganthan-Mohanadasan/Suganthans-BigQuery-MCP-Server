@@ -13,11 +13,11 @@ async function gscQuickWins(days = 28, minImpressions = 100, maxPosition = 15, d
       SUM(clicks) AS clicks,
       SUM(impressions) AS impressions,
       ROUND(SAFE_DIVIDE(SUM(clicks), SUM(impressions)) * 100, 2) AS ctr_pct,
-      ROUND(SAFE_DIVIDE(SUM(sum_top_position), SUM(impressions)), 1) AS avg_position,
+      ROUND(SAFE_DIVIDE(SUM(sum_top_position), SUM(impressions)) + 1, 1) AS avg_position,
       ROUND(SUM(impressions) * (0.11 - SAFE_DIVIDE(SUM(clicks), SUM(impressions))), 0) AS opportunity
     FROM \`${ds}.searchdata_site_impression\`
     WHERE
-      data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
+      data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_site_impression\`), INTERVAL ${days} DAY)
       AND is_anonymized_query = false
       AND search_type = 'WEB'
     GROUP BY query

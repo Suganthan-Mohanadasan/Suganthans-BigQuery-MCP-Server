@@ -21,7 +21,7 @@ export async function gscAnonymousTraffic(
       COUNT(DISTINCT url) AS unique_urls
     FROM \`${ds}.searchdata_url_impression\`
     WHERE
-      data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
+      data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days} DAY)
       AND search_type = 'WEB'
     GROUP BY 1
     ORDER BY clicks DESC
@@ -39,7 +39,7 @@ export async function gscAnonymousTraffic(
       ) * 100, 1) AS anonymous_share_pct
     FROM \`${ds}.searchdata_url_impression\`
     WHERE
-      data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
+      data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days} DAY)
       AND search_type = 'WEB'
     GROUP BY url
     HAVING total_clicks > 10

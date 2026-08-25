@@ -15,7 +15,7 @@ async function gscContentDecay(dataset) {
         SUM(clicks) AS clicks
       FROM \`${ds}.searchdata_url_impression\`
       WHERE
-        data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 4 MONTH)
+        data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL 4 MONTH)
         AND search_type = 'WEB'
       GROUP BY url, month
     ),

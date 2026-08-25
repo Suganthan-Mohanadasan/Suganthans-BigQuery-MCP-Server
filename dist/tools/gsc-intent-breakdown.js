@@ -20,10 +20,10 @@ async function gscIntentBreakdown(days = 28, dataset) {
       SUM(clicks) AS total_clicks,
       SUM(impressions) AS total_impressions,
       ROUND(SAFE_DIVIDE(SUM(clicks), SUM(impressions)) * 100, 2) AS avg_ctr_pct,
-      ROUND(SAFE_DIVIDE(SUM(sum_top_position), SUM(impressions)), 1) AS avg_position
+      ROUND(SAFE_DIVIDE(SUM(sum_top_position), SUM(impressions)) + 1, 1) AS avg_position
     FROM \`${ds}.searchdata_site_impression\`
     WHERE
-      data_date >= DATE_SUB(CURRENT_DATE(), INTERVAL ${days} DAY)
+      data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_site_impression\`), INTERVAL ${days} DAY)
       AND is_anonymized_query = false
       AND search_type = 'WEB'
     GROUP BY 1
