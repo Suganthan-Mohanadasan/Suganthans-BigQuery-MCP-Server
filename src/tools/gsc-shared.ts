@@ -108,6 +108,77 @@ export function escapeSQLString(value: string): string {
 }
 
 /**
+ * The published study curve as a SQL CASE - the fallback, not the default.
+ *
+ * These are somebody else's averages, taken across unrelated sites. Measured
+ * against one content property, the real CTR at position 1 was 3.54% against
+ * the 28.5% here: a factor of eight. Benchmarking a site against these numbers
+ * marks almost every page as underperforming, which is why this is only used
+ * for ranks where the property's own data is too thin to measure.
+ */
+export function studyBenchmarkCaseSQL(positionColumn: string): string {
+  return `CASE
+          WHEN ${positionColumn} <= 1 THEN 28.5
+          WHEN ${positionColumn} <= 2 THEN 15.7
+          WHEN ${positionColumn} <= 3 THEN 11.0
+          WHEN ${positionColumn} <= 4 THEN 8.0
+          WHEN ${positionColumn} <= 5 THEN 7.2
+          WHEN ${positionColumn} <= 6 THEN 5.1
+          WHEN ${positionColumn} <= 7 THEN 4.0
+          WHEN ${positionColumn} <= 8 THEN 3.2
+          WHEN ${positionColumn} <= 9 THEN 2.8
+          WHEN ${positionColumn} <= 10 THEN 2.5
+          ELSE GREATEST(0.5, 2.5 - (${positionColumn} - 10) * 0.2)
+        END`;
+}
+
+/**
+ * CTEs that build the property's own click curve from the export:
+ * `curve_pairs` and `curve`.
+ *
+ * Aggregate to (url, query) first and take that pair's average position, then
+ * bundle by rounded rank. CTR per rank is summed clicks over summed
+ * impressions, never a mean of ratios, so high-volume pairs carry the weight
+ * they should. Ranks below minImpressionsPerRank are dropped rather than
+ * reported as noise; callers are expected to fall back to studyBenchmarkCaseSQL
+ * for those.
+ *
+ * The window is separate from the caller's analysis window on purpose: a curve
+ * needs volume per rank, so it reads further back than the period being judged.
+ * It is also the cost lever - this CTE scans curveDays of
+ * searchdata_url_impression.
+ */
+export function measuredCurveCTEs(
+  ds: string,
+  curveDays: number = 90,
+  minImpressionsPerRank: number = 100,
+  scopeSQL: string = ""
+): string {
+  return `curve_pairs AS (
+      SELECT
+        SUM(clicks) AS curve_clicks,
+        SUM(impressions) AS curve_impressions,
+        ${AVG_POSITION_SQL} AS curve_position
+      FROM \`${ds}.searchdata_url_impression\`
+      WHERE
+        data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${curveDays} DAY)
+        AND search_type = 'WEB'
+        AND query IS NOT NULL
+        ${scopeSQL}
+      GROUP BY url, query
+    ),
+    curve AS (
+      SELECT
+        CAST(ROUND(curve_position) AS INT64) AS rank,
+        SAFE_DIVIDE(SUM(curve_clicks), SUM(curve_impressions)) * 100 AS measured_ctr_pct,
+        SUM(curve_impressions) AS rank_impressions
+      FROM curve_pairs
+      GROUP BY rank
+      HAVING SUM(curve_impressions) >= ${minImpressionsPerRank}
+    )`;
+}
+
+/**
  * Latest day present in the export.
  *
  * Anchoring ranges here instead of CURRENT_DATE() matters: the bulk export

@@ -376,16 +376,19 @@ server.tool(
 // 15. GSC CTR vs Benchmark
 server.tool(
   "gsc_ctr_benchmark",
-  "Compare your actual CTR per page against industry benchmarks by position. Flags pages significantly underperforming for their ranking position with verdicts." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX + POSITION_CAVEAT,
+  "Compare your actual CTR per page against a benchmark curve by position, with verdicts for pages underperforming their ranking. The benchmark is your own click curve measured from the export; the published study table is used only for ranks your property has too little data to measure, and every row reports which of the two it was judged against via benchmark_source, and how many impressions stood behind that rank via benchmark_rank_impressions. Pass benchmark=study to judge against the study table alone." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX + POSITION_CAVEAT,
   {
     days: z.number().default(28).describe("Number of days to analyse"),
     min_impressions: z.number().default(200).describe("Minimum impressions threshold"),
+    benchmark: z.enum(["measured", "study"]).default("measured").describe("Judge against your own measured click curve (default) or against the published study table"),
+    curve_days: z.number().default(90).describe("Window used to build the measured curve. Longer is steadier but scans more; ignored when benchmark=study."),
+    min_impressions_per_rank: z.number().default(100).describe("Ranks with fewer impressions than this fall back to the study curve instead of reporting noise"),
     dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
   },
-  async ({ days, min_impressions, dataset }) => {
+  async ({ days, min_impressions, benchmark, curve_days, min_impressions_per_rank, dataset }) => {
     try {
-      const results = await gscCtrBenchmark(days, min_impressions, dataset);
-      const wrapped = withMeta(results, "gsc_ctr_benchmark", { days, min_impressions });
+      const results = await gscCtrBenchmark(days, min_impressions, benchmark, curve_days, min_impressions_per_rank, dataset);
+      const wrapped = withMeta(results, "gsc_ctr_benchmark", { days, min_impressions, benchmark, curve_days, min_impressions_per_rank });
       return {
         content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
       };

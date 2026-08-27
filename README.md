@@ -150,7 +150,7 @@ The same analysis tools from the [GSC MCP server](https://github.com/Suganthan-M
 | `gsc_cannibalisation` | Keywords where multiple pages compete against each other |
 | `gsc_traffic_drops` | What lost traffic, and whether it's a ranking loss, CTR collapse, or demand decline |
 | `gsc_topic_cluster` | Aggregated performance for all pages matching a URL path pattern |
-| `gsc_ctr_benchmark` | Your actual CTR per position vs industry benchmarks |
+| `gsc_ctr_benchmark` | Your actual CTR per page vs your own measured click curve, falling back to the study table only for ranks you cannot measure. Every row says which it was judged against. |
 | `gsc_alerts` | Position drops, CTR collapses, click losses, disappeared pages. Severity rated |
 | `gsc_content_recommendations` | Prioritised actions: pages to update, content to create, pages to consolidate |
 | `gsc_report` | Full markdown performance report |
