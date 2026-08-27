@@ -6,7 +6,7 @@
 
 An MCP server for BigQuery that lets you ask Claude questions about your search and analytics data warehouse and get real answers. Not raw query results. Actual analysis with verdicts and recommendations.
 
-33 tools. GA4 + GSC revenue attribution. Generative AI conversation-query detection. ML forecasting. Anomaly detection. Anonymous query analysis. Free and open source.
+34 tools. GA4 + GSC revenue attribution. Generative AI conversation-query detection. ML forecasting. Anomaly detection. Anonymous query analysis. Free and open source.
 
 > **Full setup guide with screenshots:** [suganthan.com/blog/bigquery-mcp-server/](https://suganthan.com/blog/bigquery-mcp-server/)
 >
@@ -113,9 +113,9 @@ Your service account needs three IAM roles: **BigQuery Data Editor**, **BigQuery
 >
 > **Want the GA4 + GSC blending tools too?** Add the GA4 BigQuery export and one extra environment variable (`BIGQUERY_GA4_DATASET`). Full walkthrough: [GA4 + GSC in BigQuery setup guide](https://suganthan.com/blog/google-analytics-bigquery-mcp-server/).
 
-## All 33 tools
+## All 34 tools
 
-### BigQuery exclusive (9)
+### BigQuery exclusive (10)
 
 These use BigQuery capabilities the Search Console API simply doesn't have.
 
@@ -130,6 +130,7 @@ These use BigQuery capabilities the Search Console API simply doesn't have.
 | `gsc_intent_breakdown` | Classify all queries by search intent: informational, transactional, commercial, navigational. |
 | `gsc_ngrams` | Extract recurring terms from queries. Find themes your content should cover. |
 | `gsc_new_keywords` | Queries appearing in recent data that weren't present before. |
+| `gsc_query_count` | How many distinct queries a site, section or single URL is visible for, by position group, over time, against the previous period. Counts the whole export instead of a 1,000-row page, and reads the anonymised share from `is_anonymized_query` instead of inferring it. |
 
 ### GSC analysis (12)
 

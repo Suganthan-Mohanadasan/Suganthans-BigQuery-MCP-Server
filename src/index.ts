@@ -38,6 +38,8 @@ import { ga4GscPositionValue } from "./tools/ga4-gsc-position-value.js";
 import { ga4GscBrandedPerformance } from "./tools/ga4-gsc-branded-performance.js";
 // v4.1 generative AI tools — AI Mode conversation exhaust in the query table.
 import { gscGenaiConversationQueries } from "./tools/gsc-genai-conversation-queries.js";
+// Export-only surfaces and counts the Search Console API cannot return.
+import { gscQueryCount } from "./tools/gsc-query-count.js";
 
 const server = new McpServer({
   name: "bigquery-mcp",
@@ -806,10 +808,38 @@ server.tool(
   }
 );
 
+// Query counting across the whole export, not a 1,000-row API page
+server.tool(
+  "gsc_query_count",
+  "Count how many distinct queries a property, a section or a single URL is visible for, split by position group (1-3, 4-10, 11-20, 21-50, 51+), against the previous period of equal length. Scope with url or url_contains, add a time series with granularity, narrow with min_position/max_position, rank pages with top_pages. Unlike the API version this counts the whole export instead of a 1,000-row page, and reads the anonymized share from is_anonymized_query rather than inferring it from a click gap." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX + POSITION_CAVEAT,
+  {
+    days: z.number().default(28).describe("Number of days to analyse"),
+    url: z.string().optional().describe("Count only queries for this exact URL"),
+    url_contains: z.string().optional().describe("Count only queries for URLs containing this string, e.g. /guides/"),
+    granularity: z.enum(["none", "day", "week", "month"]).default("none").describe("Add a time series of distinct query counts"),
+    min_position: z.number().optional().describe("Only count queries at this average position or worse (e.g. 4)"),
+    max_position: z.number().optional().describe("Only count queries at this average position or better (e.g. 10)"),
+    search_type: z.enum(["WEB", "IMAGE", "VIDEO", "NEWS", "GOOGLE_NEWS"]).default("WEB").describe("Surface to count. Discover has no queries; use gsc_discover."),
+    top_pages: z.number().optional().describe("Also rank this many pages by query count"),
+    device: z.enum(["MOBILE", "DESKTOP", "TABLET"]).optional().describe("Restrict to one device. Omit for all devices, which is the default."),
+    country: z.string().optional().describe("Restrict to one country as an ISO-3166-1 alpha-3 code, e.g. usa, gbr, deu. Omit for all countries, which is the default."),
+    dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
+  },
+  async ({ days, url, url_contains, granularity, min_position, max_position, search_type, top_pages, device, country, dataset }) => {
+    try {
+      const results = await gscQueryCount(days, url, url_contains, granularity, min_position, max_position, search_type, top_pages, device, country, dataset);
+      const wrapped = withMeta(results, "gsc_query_count", { days, url, url_contains, granularity, min_position, max_position, search_type, top_pages, device, country, dataset });
+      return { content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }] };
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+);
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("BigQuery MCP server v4.1.1 running on stdio (33 tools)");
+  console.error("BigQuery MCP server v4.1.1 running on stdio (34 tools)");
 }
 
 main().catch((error) => {
