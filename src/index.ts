@@ -42,6 +42,7 @@ import { gscGenaiConversationQueries } from "./tools/gsc-genai-conversation-quer
 import { gscQueryCount } from "./tools/gsc-query-count.js";
 import { gscDiscover } from "./tools/gsc-discover.js";
 import { gscClickCurve } from "./tools/gsc-click-curve.js";
+import { gscShopping } from "./tools/gsc-shopping.js";
 
 const server = new McpServer({
   name: "bigquery-mcp",
@@ -885,10 +886,33 @@ server.tool(
   }
 );
 
+// Organic shopping surfaces, as columns rather than the API's searchAppearance
+server.tool(
+  "gsc_shopping",
+  "Organic shopping surfaces: free product listings (is_organic_shopping), merchant listings (is_merchant_listings) and product snippets (is_product_snippets). These are search appearances inside WEB rows, so unlike the API searchAppearance dimension they can be crossed with url, query, device and date freely. Without an appearance argument it returns all three side by side; pass one to drill into its top URLs, top queries and time series. A property that sells nothing returns zeros - that is a finding, and the note field says so." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX + POSITION_CAVEAT,
+  {
+    days: z.number().default(28).describe("Number of days to analyse"),
+    appearance: z.enum(["organic_shopping", "merchant_listings", "product_snippets"]).optional().describe("Drill into one appearance. Omit for the overview of all three."),
+    granularity: z.enum(["none", "day", "week", "month"]).default("week").describe("Bucket size for the drilldown time series"),
+    url_contains: z.string().optional().describe("Restrict to URLs containing this string"),
+    top_rows: z.number().default(50).describe("How many URLs and queries to return in the drilldown"),
+    dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
+  },
+  async ({ days, appearance, granularity, url_contains, top_rows, dataset }) => {
+    try {
+      const results = await gscShopping(days, appearance, granularity, url_contains, top_rows, dataset);
+      const wrapped = withMeta(results, "gsc_shopping", { days, appearance, granularity, url_contains, top_rows, dataset });
+      return { content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }] };
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+);
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("BigQuery MCP server v4.1.1 running on stdio (36 tools)");
+  console.error("BigQuery MCP server v4.1.1 running on stdio (37 tools)");
 }
 
 main().catch((error) => {
