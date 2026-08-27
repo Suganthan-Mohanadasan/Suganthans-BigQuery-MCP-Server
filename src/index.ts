@@ -40,6 +40,7 @@ import { ga4GscBrandedPerformance } from "./tools/ga4-gsc-branded-performance.js
 import { gscGenaiConversationQueries } from "./tools/gsc-genai-conversation-queries.js";
 // Export-only surfaces and counts the Search Console API cannot return.
 import { gscQueryCount } from "./tools/gsc-query-count.js";
+import { gscDiscover } from "./tools/gsc-discover.js";
 
 const server = new McpServer({
   name: "bigquery-mcp",
@@ -836,10 +837,32 @@ server.tool(
   }
 );
 
+// Google Discover: page-based, no query dimension, its own anonymisation flag
+server.tool(
+  "gsc_discover",
+  "Google Discover performance from the export: clicks, impressions, CTR, its share of all surfaces, a time series, top URLs, device and country split. Discover is page-based, so nothing groups by query, and its anonymisation is tracked separately via is_anonymized_discover." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX,
+  {
+    days: z.number().default(28).describe("Number of days to analyse"),
+    granularity: z.enum(["none", "day", "week", "month"]).default("week").describe("Bucket size for the time series"),
+    url_contains: z.string().optional().describe("Restrict to URLs containing this string"),
+    top_urls: z.number().default(50).describe("How many top URLs to return"),
+    dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
+  },
+  async ({ days, granularity, url_contains, top_urls, dataset }) => {
+    try {
+      const results = await gscDiscover(days, granularity, url_contains, top_urls, dataset);
+      const wrapped = withMeta(results, "gsc_discover", { days, granularity, url_contains, top_urls, dataset });
+      return { content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }] };
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+);
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("BigQuery MCP server v4.1.1 running on stdio (34 tools)");
+  console.error("BigQuery MCP server v4.1.1 running on stdio (35 tools)");
 }
 
 main().catch((error) => {
