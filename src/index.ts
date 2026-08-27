@@ -41,6 +41,7 @@ import { gscGenaiConversationQueries } from "./tools/gsc-genai-conversation-quer
 // Export-only surfaces and counts the Search Console API cannot return.
 import { gscQueryCount } from "./tools/gsc-query-count.js";
 import { gscDiscover } from "./tools/gsc-discover.js";
+import { gscClickCurve } from "./tools/gsc-click-curve.js";
 
 const server = new McpServer({
   name: "bigquery-mcp",
@@ -859,10 +860,35 @@ server.tool(
   }
 );
 
+// The click curve, measured on this property instead of borrowed from a study
+server.tool(
+  "gsc_click_curve",
+  "Build the click curve from your own data: CTR per ranking position, measured instead of borrowed from a study. Aggregates to (url, query) pairs, takes each pair's average position, rounds it to a rank, then divides summed clicks by summed impressions per rank. Segment by device, country, search_type, or branded vs non-branded with a brand_pattern - the branded split matters most, because branded queries inflate a blended curve at the top. Also reports how many clicks the curve cannot cover, because anonymized rows carry no position." + GUARDRAIL_SUFFIX + VISUAL_SUFFIX + POSITION_CAVEAT,
+  {
+    days: z.number().default(90).describe("Number of days to analyse. Longer is better here: the curve needs volume per rank."),
+    max_position: z.number().default(20).describe("Highest rank to include"),
+    min_impressions_per_rank: z.number().default(100).describe("Drop ranks below this many impressions instead of reporting noise"),
+    segment_by: z.enum(["none", "device", "country", "search_type", "branded"]).default("none").describe("Split the curve by this dimension"),
+    brand_pattern: z.string().optional().describe("Regex for branded queries, required when segment_by is branded, e.g. yourbrand"),
+    search_type: z.enum(["WEB", "IMAGE", "VIDEO", "NEWS", "GOOGLE_NEWS"]).default("WEB").describe("Surface to measure. Ignored when segment_by is search_type."),
+    url_contains: z.string().optional().describe("Restrict to URLs containing this string, e.g. to get a curve for one section"),
+    dataset: z.string().optional().describe("BigQuery dataset containing GSC data"),
+  },
+  async ({ days, max_position, min_impressions_per_rank, segment_by, brand_pattern, search_type, url_contains, dataset }) => {
+    try {
+      const results = await gscClickCurve(days, max_position, min_impressions_per_rank, segment_by, brand_pattern, search_type, url_contains, dataset);
+      const wrapped = withMeta(results, "gsc_click_curve", { days, max_position, min_impressions_per_rank, segment_by, brand_pattern, search_type, url_contains, dataset });
+      return { content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }] };
+    } catch (error) {
+      return errorResponse(error);
+    }
+  }
+);
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("BigQuery MCP server v4.1.1 running on stdio (35 tools)");
+  console.error("BigQuery MCP server v4.1.1 running on stdio (36 tools)");
 }
 
 main().catch((error) => {
