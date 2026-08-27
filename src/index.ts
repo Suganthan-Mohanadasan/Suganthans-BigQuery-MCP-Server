@@ -41,7 +41,7 @@ import { gscGenaiConversationQueries } from "./tools/gsc-genai-conversation-quer
 
 const server = new McpServer({
   name: "bigquery-mcp",
-  version: "4.1.0",
+  version: "4.1.1",
 });
 
 function errorResponse(error: unknown) {
@@ -809,7 +809,7 @@ server.tool(
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("BigQuery MCP server v4.1.0 running on stdio (33 tools)");
+  console.error("BigQuery MCP server v4.1.1 running on stdio (33 tools)");
 }
 
 main().catch((error) => {
