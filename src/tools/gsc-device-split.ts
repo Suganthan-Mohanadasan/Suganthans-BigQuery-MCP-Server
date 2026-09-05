@@ -1,4 +1,5 @@
 import { runQuery } from "./query.js";
+import { lastExportDay } from "./gsc-shared.js";
 import { getConfig, validateIdentifier } from "../client.js";
 
 export async function gscDeviceSplit(
@@ -26,7 +27,7 @@ export async function gscDeviceSplit(
         ) AS rn
       FROM \`${ds}.searchdata_url_impression\`
       WHERE
-        data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days} DAY)
+        data_date >= DATE_SUB(${lastExportDay(ds, "searchdata_url_impression")}, INTERVAL ${days} DAY)
         AND is_anonymized_query = false
         AND search_type = 'WEB'
         AND device IN ('MOBILE', 'DESKTOP')

@@ -3,10 +3,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.gscContentDecay = gscContentDecay;
 const query_js_1 = require("./query.js");
 const client_js_1 = require("../client.js");
-async function gscContentDecay(dataset) {
+const gsc_shared_js_1 = require("./gsc-shared.js");
+async function gscContentDecay(device, country, dataset) {
     const config = (0, client_js_1.getConfig)();
     const ds = dataset || config.defaultDataset || "searchconsole";
     (0, client_js_1.validateIdentifier)(ds, "dataset");
+    const extra = (0, gsc_shared_js_1.deviceCountryConditions)(device, country, "WEB");
+    const scopeSQL = extra.length ? `AND ${extra.join("\n        AND ")}` : "";
     const sql = `
     WITH monthly AS (
       SELECT
@@ -15,8 +18,9 @@ async function gscContentDecay(dataset) {
         SUM(clicks) AS clicks
       FROM \`${ds}.searchdata_url_impression\`
       WHERE
-        data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL 4 MONTH)
+        data_date >= DATE_SUB(${(0, gsc_shared_js_1.lastExportDay)(ds, "searchdata_url_impression")}, INTERVAL 4 MONTH)
         AND search_type = 'WEB'
+        ${scopeSQL}
       GROUP BY url, month
     ),
     ranked AS (

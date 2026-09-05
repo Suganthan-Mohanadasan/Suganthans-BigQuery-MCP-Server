@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.gscTrafficDrops = gscTrafficDrops;
 const query_js_1 = require("./query.js");
+const gsc_shared_js_1 = require("./gsc-shared.js");
 const client_js_1 = require("../client.js");
 async function gscTrafficDrops(days = 28, dataset) {
     const config = (0, client_js_1.getConfig)();
@@ -17,7 +18,7 @@ async function gscTrafficDrops(days = 28, dataset) {
         ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)) + 1, 1) AS avg_position
       FROM \`${ds}.searchdata_url_impression\`
       WHERE
-        data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days} DAY)
+        data_date >= DATE_SUB(${(0, gsc_shared_js_1.lastExportDay)(ds, "searchdata_url_impression")}, INTERVAL ${days} DAY)
         AND search_type = 'WEB'
       GROUP BY url
     ),
@@ -30,8 +31,8 @@ async function gscTrafficDrops(days = 28, dataset) {
         ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)) + 1, 1) AS avg_position
       FROM \`${ds}.searchdata_url_impression\`
       WHERE
-        data_date BETWEEN DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days * 2} DAY)
-          AND DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days + 1} DAY)
+        data_date BETWEEN DATE_SUB(${(0, gsc_shared_js_1.lastExportDay)(ds, "searchdata_url_impression")}, INTERVAL ${days * 2} DAY)
+          AND DATE_SUB(${(0, gsc_shared_js_1.lastExportDay)(ds, "searchdata_url_impression")}, INTERVAL ${days + 1} DAY)
         AND search_type = 'WEB'
       GROUP BY url
     )

@@ -16,7 +16,7 @@ async function sampleRows(dataset, table, limit = 10, projectId) {
     const sql = `SELECT * FROM \`${targetProject}.${dataset}.${table}\` LIMIT ${capped}`;
     const [job] = await client.createQueryJob({
         query: sql,
-        location: (0, client_js_1.resolveLocation)(targetProject),
+        location: (0, client_js_1.resolveLocation)(targetProject, dataset),
         maximumBytesBilled: String(1 * 1024 * 1024 * 1024), // 1GB cap for sample queries
     });
     const [rows] = await job.getQueryResults({ maxResults: capped });

@@ -1,6 +1,6 @@
 {
   "name": "@suganthan/bigquery-mcp",
-  "version": "4.1.1",
+  "version": "4.3.0",
   "description": "BigQuery MCP server for Claude \u2014 query any BigQuery dataset in natural language, with built-in SEO analysis tools for GSC bulk export data",
   "main": "dist/index.js",
   "bin": {

@@ -22,7 +22,7 @@ export async function sampleRows(
 
   const [job] = await client.createQueryJob({
     query: sql,
-    location: resolveLocation(targetProject),
+    location: resolveLocation(targetProject, dataset),
     maximumBytesBilled: String(1 * 1024 * 1024 * 1024), // 1GB cap for sample queries
   });
 

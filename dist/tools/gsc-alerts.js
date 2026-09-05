@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.gscAlerts = gscAlerts;
 const query_js_1 = require("./query.js");
+const gsc_shared_js_1 = require("./gsc-shared.js");
 const client_js_1 = require("../client.js");
 async function gscAlerts(days = 7, positionDropThreshold = 20, ctrDropPct = 50, clickDropPct = 30, dataset) {
     const config = (0, client_js_1.getConfig)();
@@ -19,7 +20,7 @@ async function gscAlerts(days = 7, positionDropThreshold = 20, ctrDropPct = 50, 
         ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)) + 1, 1) AS avg_position
       FROM \`${ds}.searchdata_url_impression\`
       WHERE
-        data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days} DAY)
+        data_date >= DATE_SUB(${(0, gsc_shared_js_1.lastExportDay)(ds, "searchdata_url_impression")}, INTERVAL ${days} DAY)
         AND search_type = 'WEB'
         AND is_anonymized_query = false
       GROUP BY query, url
@@ -34,8 +35,8 @@ async function gscAlerts(days = 7, positionDropThreshold = 20, ctrDropPct = 50, 
         ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)) + 1, 1) AS avg_position
       FROM \`${ds}.searchdata_url_impression\`
       WHERE
-        data_date BETWEEN DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days * 2} DAY)
-          AND DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days + 1} DAY)
+        data_date BETWEEN DATE_SUB(${(0, gsc_shared_js_1.lastExportDay)(ds, "searchdata_url_impression")}, INTERVAL ${days * 2} DAY)
+          AND DATE_SUB(${(0, gsc_shared_js_1.lastExportDay)(ds, "searchdata_url_impression")}, INTERVAL ${days + 1} DAY)
         AND search_type = 'WEB'
         AND is_anonymized_query = false
       GROUP BY query, url
@@ -82,7 +83,7 @@ async function gscAlerts(days = 7, positionDropThreshold = 20, ctrDropPct = 50, 
       SELECT DISTINCT query, url
       FROM \`${ds}.searchdata_url_impression\`
       WHERE
-        data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days} DAY)
+        data_date >= DATE_SUB(${(0, gsc_shared_js_1.lastExportDay)(ds, "searchdata_url_impression")}, INTERVAL ${days} DAY)
         AND search_type = 'WEB'
         AND is_anonymized_query = false
     ),
@@ -95,8 +96,8 @@ async function gscAlerts(days = 7, positionDropThreshold = 20, ctrDropPct = 50, 
         ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)) + 1, 1) AS avg_position
       FROM \`${ds}.searchdata_url_impression\`
       WHERE
-        data_date BETWEEN DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days * 2} DAY)
-          AND DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days + 1} DAY)
+        data_date BETWEEN DATE_SUB(${(0, gsc_shared_js_1.lastExportDay)(ds, "searchdata_url_impression")}, INTERVAL ${days * 2} DAY)
+          AND DATE_SUB(${(0, gsc_shared_js_1.lastExportDay)(ds, "searchdata_url_impression")}, INTERVAL ${days + 1} DAY)
         AND search_type = 'WEB'
         AND is_anonymized_query = false
       GROUP BY query, url

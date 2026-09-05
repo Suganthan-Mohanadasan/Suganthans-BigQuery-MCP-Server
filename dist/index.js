@@ -38,9 +38,14 @@ const ga4_gsc_position_value_js_1 = require("./tools/ga4-gsc-position-value.js")
 const ga4_gsc_branded_performance_js_1 = require("./tools/ga4-gsc-branded-performance.js");
 // v4.1 generative AI tools — AI Mode conversation exhaust in the query table.
 const gsc_genai_conversation_queries_js_1 = require("./tools/gsc-genai-conversation-queries.js");
+const gsc_query_count_js_1 = require("./tools/gsc-query-count.js");
+const gsc_discover_js_1 = require("./tools/gsc-discover.js");
+const gsc_click_curve_js_1 = require("./tools/gsc-click-curve.js");
+const gsc_shopping_js_1 = require("./tools/gsc-shopping.js");
+const gsc_image_search_js_1 = require("./tools/gsc-image-search.js");
 const server = new mcp_js_1.McpServer({
     name: "bigquery-mcp",
-    version: "4.1.1",
+    version: "4.3.0",
 });
 function errorResponse(error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -163,11 +168,13 @@ server.tool("gsc_quick_wins", "Find keywords from GSC bulk export data at positi
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     min_impressions: zod_1.z.number().default(100).describe("Minimum impressions threshold"),
     max_position: zod_1.z.number().default(15).describe("Maximum position to include"),
+    device: zod_1.z.enum(["MOBILE", "DESKTOP", "TABLET"]).optional().describe("Restrict to one device. Omit for all devices, which is the default."),
+    country: zod_1.z.string().optional().describe("Restrict to one country as an ISO-3166-1 alpha-3 code, e.g. deu, aut, che. Omit for all countries, which is the default."),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
-}, async ({ days, min_impressions, max_position, dataset }) => {
+}, async ({ days, min_impressions, max_position, device, country, dataset }) => {
     try {
-        const results = await (0, gsc_quick_wins_js_1.gscQuickWins)(days, min_impressions, max_position, dataset);
-        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_quick_wins", { days, min_impressions, max_position });
+        const results = await (0, gsc_quick_wins_js_1.gscQuickWins)(days, min_impressions, max_position, device, country, dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_quick_wins", { days, min_impressions, max_position, device, country });
         return {
             content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
         };
@@ -180,11 +187,13 @@ server.tool("gsc_quick_wins", "Find keywords from GSC bulk export data at positi
 server.tool("gsc_ctr_opportunities", "Find pages with high impressions but CTR significantly below the expected benchmark for their ranking position. These are title and meta description optimisation candidates." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX + guardrails_js_1.POSITION_CAVEAT, {
     days: zod_1.z.number().default(28).describe("Number of days to analyse"),
     min_impressions: zod_1.z.number().default(500).describe("Minimum impressions threshold"),
+    device: zod_1.z.enum(["MOBILE", "DESKTOP", "TABLET"]).optional().describe("Restrict to one device. Omit for all devices, which is the default."),
+    country: zod_1.z.string().optional().describe("Restrict to one country as an ISO-3166-1 alpha-3 code, e.g. deu, aut, che. Omit for all countries, which is the default."),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
-}, async ({ days, min_impressions, dataset }) => {
+}, async ({ days, min_impressions, device, country, dataset }) => {
     try {
-        const results = await (0, gsc_ctr_opportunities_js_1.gscCtrOpportunities)(days, min_impressions, dataset);
-        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_ctr_opportunities", { days, min_impressions });
+        const results = await (0, gsc_ctr_opportunities_js_1.gscCtrOpportunities)(days, min_impressions, device, country, dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_ctr_opportunities", { days, min_impressions, device, country });
         return {
             content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
         };
@@ -229,11 +238,13 @@ server.tool("gsc_site_snapshot", "Get a quick overview of how the site is perfor
 });
 // 11. GSC Content Decay
 server.tool("gsc_content_decay", "Find pages with consistent traffic decline over three consecutive months from GSC bulk export data. One bad month is noise; three is a problem." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
+    device: zod_1.z.enum(["MOBILE", "DESKTOP", "TABLET"]).optional().describe("Restrict to one device. Omit for all devices, which is the default."),
+    country: zod_1.z.string().optional().describe("Restrict to one country as an ISO-3166-1 alpha-3 code, e.g. deu, aut, che. Omit for all countries, which is the default."),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
-}, async ({ dataset }) => {
+}, async ({ device, country, dataset }) => {
     try {
-        const results = await (0, gsc_content_decay_js_1.gscContentDecay)(dataset);
-        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_content_decay", {});
+        const results = await (0, gsc_content_decay_js_1.gscContentDecay)(device, country, dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_content_decay", { device, country });
         return {
             content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
         };
@@ -383,11 +394,12 @@ server.tool("gsc_anonymous_traffic", "Analyse anonymous (hidden) query traffic t
 });
 // 20. GSC Seasonal Analysis
 server.tool("gsc_seasonal", "Year-over-year seasonal traffic analysis. Shows monthly clicks, impressions, CTR, and position with YoY comparison. Requires 12+ months of BigQuery data. Impossible with the 16-month rolling GSC API." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX + guardrails_js_1.POSITION_CAVEAT, {
+    include_partial_months: zod_1.z.boolean().default(false).describe("Show the first and last month of the export even though they are incomplete. Off by default: a part-month next to full months looks like a collapse when it is only missing data."),
     dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
-}, async ({ dataset }) => {
+}, async ({ include_partial_months, dataset }) => {
     try {
-        const results = await (0, gsc_seasonal_js_1.gscSeasonal)(dataset);
-        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_seasonal", {});
+        const results = await (0, gsc_seasonal_js_1.gscSeasonal)(include_partial_months, dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_seasonal", { include_partial_months });
         return {
             content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }],
         };
@@ -633,10 +645,105 @@ server.tool("gsc_genai_conversation_queries", "Surface AI-conversation exhaust h
         return errorResponse(error);
     }
 });
+// 34. GSC Query Counting
+server.tool("gsc_query_count", "Count how many distinct queries a property, a section or a single URL is visible for, split by position group (1-3, 4-10, 11-20, 21-50, 51+), against the previous period of equal length. Scope with url or url_contains, add a time series with granularity, narrow with min_position/max_position, rank pages with top_pages. Unlike the API version this counts the whole export instead of a 1,000-row page, and reads the anonymized share from is_anonymized_query rather than inferring it from a click gap. Ranges are anchored to the latest day in the export, not today." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX + guardrails_js_1.POSITION_CAVEAT, {
+    days: zod_1.z.number().default(28).describe("Number of days to analyse"),
+    url: zod_1.z.string().optional().describe("Count only queries for this exact URL"),
+    url_contains: zod_1.z.string().optional().describe("Count only queries for URLs containing this string, e.g. /ratgeber/"),
+    granularity: zod_1.z.enum(["none", "day", "week", "month"]).default("none").describe("Add a time series of distinct query counts"),
+    min_position: zod_1.z.number().optional().describe("Only count queries at this average position or worse (e.g. 4)"),
+    max_position: zod_1.z.number().optional().describe("Only count queries at this average position or better (e.g. 10)"),
+    search_type: zod_1.z.enum(["WEB", "IMAGE", "VIDEO", "NEWS", "GOOGLE_NEWS"]).default("WEB").describe("Surface to count. Discover has no queries; use gsc_discover."),
+    top_pages: zod_1.z.number().optional().describe("Also rank this many pages by query count"),
+    device: zod_1.z.enum(["MOBILE", "DESKTOP", "TABLET"]).optional().describe("Restrict to one device. Omit for all devices, which is the default."),
+    country: zod_1.z.string().optional().describe("Restrict to one country as an ISO-3166-1 alpha-3 code, e.g. deu, aut, che. Omit for all countries, which is the default."),
+    dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
+}, async ({ days, url, url_contains, granularity, min_position, max_position, search_type, top_pages, device, country, dataset }) => {
+    try {
+        const results = await (0, gsc_query_count_js_1.gscQueryCount)(days, url, url_contains, granularity, min_position, max_position, search_type, top_pages, device, country, dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_query_count", { days, url, url_contains, granularity, min_position, max_position, search_type, top_pages, device, country, dataset });
+        return { content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }] };
+    }
+    catch (error) {
+        return errorResponse(error);
+    }
+});
+// 35. GSC Discover
+server.tool("gsc_discover", "Google Discover performance from the export: clicks, impressions, CTR, its share of all surfaces, a time series, top URLs, device and country split. Discover is page-based, so nothing groups by query, and its anonymisation is tracked separately via is_anonymized_discover." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX, {
+    days: zod_1.z.number().default(28).describe("Number of days to analyse"),
+    granularity: zod_1.z.enum(["none", "day", "week", "month"]).default("week").describe("Bucket size for the time series"),
+    url_contains: zod_1.z.string().optional().describe("Restrict to URLs containing this string"),
+    top_urls: zod_1.z.number().default(50).describe("How many top URLs to return"),
+    dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
+}, async ({ days, granularity, url_contains, top_urls, dataset }) => {
+    try {
+        const results = await (0, gsc_discover_js_1.gscDiscover)(days, granularity, url_contains, top_urls, dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_discover", { days, granularity, url_contains, top_urls, dataset });
+        return { content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }] };
+    }
+    catch (error) {
+        return errorResponse(error);
+    }
+});
+// 36. GSC Click Curve
+server.tool("gsc_click_curve", "Build the click curve from your own data: CTR per ranking position, measured instead of borrowed from a study. Aggregates to (url, query) pairs, takes each pair's average position, rounds it to a rank, then divides summed clicks by summed impressions per rank. Segment by device, country, search_type, or branded vs non-branded with a brand_pattern - the branded split matters most, because branded queries inflate a blended curve at the top. Also reports how many clicks the curve cannot cover, because anonymized rows carry no position." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX + guardrails_js_1.POSITION_CAVEAT, {
+    days: zod_1.z.number().default(90).describe("Number of days to analyse. Longer is better here: the curve needs volume per rank."),
+    max_position: zod_1.z.number().default(20).describe("Highest rank to include"),
+    min_impressions_per_rank: zod_1.z.number().default(100).describe("Drop ranks below this many impressions instead of reporting noise"),
+    segment_by: zod_1.z.enum(["none", "device", "country", "search_type", "branded"]).default("none").describe("Split the curve by this dimension"),
+    brand_pattern: zod_1.z.string().optional().describe("Regex for branded queries, required when segment_by is branded, e.g. homeandsmart"),
+    search_type: zod_1.z.enum(["WEB", "IMAGE", "VIDEO", "NEWS", "GOOGLE_NEWS"]).default("WEB").describe("Surface to measure. Ignored when segment_by is search_type."),
+    url_contains: zod_1.z.string().optional().describe("Restrict to URLs containing this string, e.g. to get a curve for one section"),
+    dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
+}, async ({ days, max_position, min_impressions_per_rank, segment_by, brand_pattern, search_type, url_contains, dataset }) => {
+    try {
+        const results = await (0, gsc_click_curve_js_1.gscClickCurve)(days, max_position, min_impressions_per_rank, segment_by, brand_pattern, search_type, url_contains, dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_click_curve", { days, max_position, min_impressions_per_rank, segment_by, brand_pattern, search_type, url_contains, dataset });
+        return { content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }] };
+    }
+    catch (error) {
+        return errorResponse(error);
+    }
+});
+// 37. GSC Organic Shopping / Free Listings
+server.tool("gsc_shopping", "Organic shopping surfaces: free product listings (is_organic_shopping), merchant listings (is_merchant_listings) and product snippets (is_product_snippets). These are search appearances inside WEB rows, so unlike the API searchAppearance dimension they can be crossed with url, query, device and date freely. Without an appearance argument it returns all three side by side; pass one to drill into its top URLs, top queries and time series. A property that sells nothing returns zeros - that is a finding, and the note field says so." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX + guardrails_js_1.POSITION_CAVEAT, {
+    days: zod_1.z.number().default(28).describe("Number of days to analyse"),
+    appearance: zod_1.z.enum(["organic_shopping", "merchant_listings", "product_snippets"]).optional().describe("Drill into one appearance. Omit for the overview of all three."),
+    granularity: zod_1.z.enum(["none", "day", "week", "month"]).default("week").describe("Bucket size for the drilldown time series"),
+    url_contains: zod_1.z.string().optional().describe("Restrict to URLs containing this string"),
+    top_rows: zod_1.z.number().default(50).describe("How many URLs and queries to return in the drilldown"),
+    dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
+}, async ({ days, appearance, granularity, url_contains, top_rows, dataset }) => {
+    try {
+        const results = await (0, gsc_shopping_js_1.gscShopping)(days, appearance, granularity, url_contains, top_rows, dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_shopping", { days, appearance, granularity, url_contains, top_rows, dataset });
+        return { content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }] };
+    }
+    catch (error) {
+        return errorResponse(error);
+    }
+});
+// 38. GSC Image Search
+server.tool("gsc_image_search", "Google Images performance from the export: clicks, impressions, CTR, average position, share of all surfaces, time series, top pages, top queries, device and country split, plus the AMP-image-result slice. Unlike Discover, image search does carry queries. Note that url is the page hosting the image, not the image file - the export has no image-level dimension." + guardrails_js_1.GUARDRAIL_SUFFIX + guardrails_js_1.VISUAL_SUFFIX + guardrails_js_1.POSITION_CAVEAT, {
+    days: zod_1.z.number().default(28).describe("Number of days to analyse"),
+    granularity: zod_1.z.enum(["none", "day", "week", "month"]).default("week").describe("Bucket size for the time series"),
+    url_contains: zod_1.z.string().optional().describe("Restrict to URLs containing this string"),
+    top_rows: zod_1.z.number().default(50).describe("How many pages and queries to return"),
+    dataset: zod_1.z.string().optional().describe("BigQuery dataset containing GSC data"),
+}, async ({ days, granularity, url_contains, top_rows, dataset }) => {
+    try {
+        const results = await (0, gsc_image_search_js_1.gscImageSearch)(days, granularity, url_contains, top_rows, dataset);
+        const wrapped = (0, guardrails_js_1.withMeta)(results, "gsc_image_search", { days, granularity, url_contains, top_rows, dataset });
+        return { content: [{ type: "text", text: JSON.stringify(wrapped, null, 2) }] };
+    }
+    catch (error) {
+        return errorResponse(error);
+    }
+});
 async function main() {
     const transport = new stdio_js_1.StdioServerTransport();
     await server.connect(transport);
-    console.error("BigQuery MCP server v4.1.1 running on stdio (33 tools)");
+    console.error("BigQuery MCP server v4.3.0 running on stdio (38 tools)");
 }
 main().catch((error) => {
     console.error("Fatal error:", error);

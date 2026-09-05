@@ -1,12 +1,21 @@
 import { runQuery } from "./query.js";
 import { getConfig, validateIdentifier } from "../client.js";
+import {
+  deviceCountryConditions,
+  lastExportDay,
+} from "./gsc-shared.js";
 
 export async function gscContentDecay(
+  device?: string,
+  country?: string,
   dataset?: string
 ): Promise<{ rows: Record<string, unknown>[]; totalRows: number; bytesProcessed: string }> {
   const config = getConfig();
   const ds = dataset || config.defaultDataset || "searchconsole";
   validateIdentifier(ds, "dataset");
+
+  const extra = deviceCountryConditions(device, country, "WEB");
+  const scopeSQL = extra.length ? `AND ${extra.join("\n        AND ")}` : "";
 
   const sql = `
     WITH monthly AS (
@@ -16,8 +25,9 @@ export async function gscContentDecay(
         SUM(clicks) AS clicks
       FROM \`${ds}.searchdata_url_impression\`
       WHERE
-        data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL 4 MONTH)
+        data_date >= DATE_SUB(${lastExportDay(ds, "searchdata_url_impression")}, INTERVAL 4 MONTH)
         AND search_type = 'WEB'
+        ${scopeSQL}
       GROUP BY url, month
     ),
     ranked AS (

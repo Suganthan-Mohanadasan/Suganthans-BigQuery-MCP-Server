@@ -1,4 +1,5 @@
 import { runQuery } from "./query.js";
+import { lastExportDay } from "./gsc-shared.js";
 import { getConfig, validateIdentifier } from "../client.js";
 
 interface AlertResult {
@@ -31,7 +32,7 @@ export async function gscAlerts(
         ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)) + 1, 1) AS avg_position
       FROM \`${ds}.searchdata_url_impression\`
       WHERE
-        data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days} DAY)
+        data_date >= DATE_SUB(${lastExportDay(ds, "searchdata_url_impression")}, INTERVAL ${days} DAY)
         AND search_type = 'WEB'
         AND is_anonymized_query = false
       GROUP BY query, url
@@ -46,8 +47,8 @@ export async function gscAlerts(
         ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)) + 1, 1) AS avg_position
       FROM \`${ds}.searchdata_url_impression\`
       WHERE
-        data_date BETWEEN DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days * 2} DAY)
-          AND DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days + 1} DAY)
+        data_date BETWEEN DATE_SUB(${lastExportDay(ds, "searchdata_url_impression")}, INTERVAL ${days * 2} DAY)
+          AND DATE_SUB(${lastExportDay(ds, "searchdata_url_impression")}, INTERVAL ${days + 1} DAY)
         AND search_type = 'WEB'
         AND is_anonymized_query = false
       GROUP BY query, url
@@ -95,7 +96,7 @@ export async function gscAlerts(
       SELECT DISTINCT query, url
       FROM \`${ds}.searchdata_url_impression\`
       WHERE
-        data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days} DAY)
+        data_date >= DATE_SUB(${lastExportDay(ds, "searchdata_url_impression")}, INTERVAL ${days} DAY)
         AND search_type = 'WEB'
         AND is_anonymized_query = false
     ),
@@ -108,8 +109,8 @@ export async function gscAlerts(
         ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)) + 1, 1) AS avg_position
       FROM \`${ds}.searchdata_url_impression\`
       WHERE
-        data_date BETWEEN DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days * 2} DAY)
-          AND DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days + 1} DAY)
+        data_date BETWEEN DATE_SUB(${lastExportDay(ds, "searchdata_url_impression")}, INTERVAL ${days * 2} DAY)
+          AND DATE_SUB(${lastExportDay(ds, "searchdata_url_impression")}, INTERVAL ${days + 1} DAY)
         AND search_type = 'WEB'
         AND is_anonymized_query = false
       GROUP BY query, url

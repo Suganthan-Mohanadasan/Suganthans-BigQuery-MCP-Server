@@ -1,4 +1,5 @@
 import { runQuery } from "./query.js";
+import { lastExportDay } from "./gsc-shared.js";
 import { getConfig, validateIdentifier } from "../client.js";
 
 export async function gscTopicCluster(
@@ -27,7 +28,7 @@ export async function gscTopicCluster(
       ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)) + 1, 1) AS avg_position
     FROM \`${ds}.searchdata_url_impression\`
     WHERE
-      data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days} DAY)
+      data_date >= DATE_SUB(${lastExportDay(ds, "searchdata_url_impression")}, INTERVAL ${days} DAY)
       AND url LIKE '%${safePattern}%'
       AND search_type = 'WEB'
   `;
@@ -41,7 +42,7 @@ export async function gscTopicCluster(
       ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)) + 1, 1) AS avg_position
     FROM \`${ds}.searchdata_url_impression\`
     WHERE
-      data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days} DAY)
+      data_date >= DATE_SUB(${lastExportDay(ds, "searchdata_url_impression")}, INTERVAL ${days} DAY)
       AND url LIKE '%${safePattern}%'
       AND search_type = 'WEB'
     GROUP BY url
@@ -58,7 +59,7 @@ export async function gscTopicCluster(
       ROUND(SAFE_DIVIDE(SUM(sum_position), SUM(impressions)) + 1, 1) AS avg_position
     FROM \`${ds}.searchdata_url_impression\`
     WHERE
-      data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days} DAY)
+      data_date >= DATE_SUB(${lastExportDay(ds, "searchdata_url_impression")}, INTERVAL ${days} DAY)
       AND url LIKE '%${safePattern}%'
       AND is_anonymized_query = false
       AND search_type = 'WEB'

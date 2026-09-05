@@ -49,7 +49,7 @@ export async function listTables(
     ORDER BY table_name, ordinal_position
   `;
 
-  const location = resolveLocation(targetProject);
+  const location = resolveLocation(targetProject, dataset);
   const [tableJob] = await client.createQueryJob({ query: tableQuery, location });
   const [columnJob] = await client.createQueryJob({ query: columnQuery, location });
 

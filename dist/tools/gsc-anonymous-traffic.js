@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.gscAnonymousTraffic = gscAnonymousTraffic;
 const query_js_1 = require("./query.js");
+const gsc_shared_js_1 = require("./gsc-shared.js");
 const client_js_1 = require("../client.js");
 async function gscAnonymousTraffic(days = 28, dataset) {
     const config = (0, client_js_1.getConfig)();
@@ -16,7 +17,7 @@ async function gscAnonymousTraffic(days = 28, dataset) {
       COUNT(DISTINCT url) AS unique_urls
     FROM \`${ds}.searchdata_url_impression\`
     WHERE
-      data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days} DAY)
+      data_date >= DATE_SUB(${(0, gsc_shared_js_1.lastExportDay)(ds, "searchdata_url_impression")}, INTERVAL ${days} DAY)
       AND search_type = 'WEB'
     GROUP BY 1
     ORDER BY clicks DESC
@@ -33,7 +34,7 @@ async function gscAnonymousTraffic(days = 28, dataset) {
       ) * 100, 1) AS anonymous_share_pct
     FROM \`${ds}.searchdata_url_impression\`
     WHERE
-      data_date >= DATE_SUB((SELECT MAX(data_date) FROM \`${ds}.searchdata_url_impression\`), INTERVAL ${days} DAY)
+      data_date >= DATE_SUB(${(0, gsc_shared_js_1.lastExportDay)(ds, "searchdata_url_impression")}, INTERVAL ${days} DAY)
       AND search_type = 'WEB'
     GROUP BY url
     HAVING total_clicks > 10
